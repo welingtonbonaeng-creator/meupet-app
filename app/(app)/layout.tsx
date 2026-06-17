@@ -25,7 +25,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
       <Sidebar onLogout={handleLogout} planLabel={profile?.plan === 'premium' ? 'Premium' : profile?.plan === 'family' ? 'Família' : 'Grátis'} />
       <main className="flex-1 lg:ml-64 pb-16 lg:pb-0">
         {children}

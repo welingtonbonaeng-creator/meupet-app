@@ -2,16 +2,18 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useTheme } from '@/components/ThemeProvider'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { Profile } from '@/types'
-import { User, Bell, LogOut, Save } from 'lucide-react'
+import { User, Moon, Sun, LogOut, Save } from 'lucide-react'
 
 export default function ConfiguracoesPage() {
   const router   = useRouter()
   const supabase = createClient()
+  const { theme, toggleTheme } = useTheme()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [form, setForm]       = useState({ name: '', phone: '', city: '', state: '' })
   const [saving, setSaving]   = useState(false)
@@ -53,16 +55,16 @@ export default function ConfiguracoesPage() {
 
         {/* Plano */}
         {profile && (
-          <Card className={`${profile.plan !== 'free' ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white border-0' : ''}`}>
+          <Card className={`${profile.plan !== 'free' ? 'bg-gradient-to-r from-blue-600 to-blue-500 border-0' : ''}`}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className={`text-xs font-bold mb-0.5 ${profile.plan !== 'free' ? 'text-blue-200' : 'text-slate-500'}`}>PLANO ATUAL</div>
-                  <div className={`text-lg font-bold ${profile.plan !== 'free' ? 'text-white' : 'text-slate-800'}`}>
+                  <div className={`text-xs font-bold mb-0.5 ${profile.plan !== 'free' ? 'text-blue-200' : 'text-slate-500 dark:text-slate-400'}`}>PLANO ATUAL</div>
+                  <div className={`text-lg font-bold ${profile.plan !== 'free' ? 'text-white' : 'text-slate-800 dark:text-slate-100'}`}>
                     {profile.plan === 'free' ? 'Gratuito' : profile.plan === 'premium' ? 'Premium ⭐' : 'Família 👨‍👩‍👧‍👦'}
                   </div>
                   {profile.trial_ends_at && new Date(profile.trial_ends_at) > new Date() && (
-                    <div className={`text-xs mt-0.5 ${profile.plan !== 'free' ? 'text-blue-200' : 'text-blue-600'}`}>
+                    <div className={`text-xs mt-0.5 ${profile.plan !== 'free' ? 'text-blue-200' : 'text-blue-600 dark:text-blue-400'}`}>
                       Trial até {new Date(profile.trial_ends_at).toLocaleDateString('pt-BR')}
                     </div>
                   )}
@@ -75,10 +77,47 @@ export default function ConfiguracoesPage() {
           </Card>
         )}
 
+        {/* Aparência */}
+        <Card>
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2 mb-4">
+              {theme === 'dark' ? <Moon size={16} className="text-blue-400" /> : <Sun size={16} className="text-amber-500" />}
+              Aparência
+            </h3>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                  {theme === 'dark' ? 'Modo escuro ativo' : 'Modo claro ativo'}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {theme === 'dark' ? 'Interface com fundo escuro' : 'Interface com fundo claro'}
+                </p>
+              </div>
+              <button
+                onClick={toggleTheme}
+                className={`relative inline-flex h-7 w-13 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 ${
+                  theme === 'dark' ? 'bg-blue-600' : 'bg-slate-200'
+                }`}
+                style={{ width: '52px' }}
+                aria-label="Alternar tema"
+              >
+                <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm transition-transform ${
+                  theme === 'dark' ? 'translate-x-7' : 'translate-x-1'
+                }`}>
+                  {theme === 'dark'
+                    ? <Moon size={11} className="text-blue-600" />
+                    : <Sun size={11} className="text-amber-500" />
+                  }
+                </span>
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Dados pessoais */}
         <Card>
           <CardContent className="p-4 space-y-3">
-            <h3 className="font-semibold text-slate-700 flex items-center gap-2">
+            <h3 className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
               <User size={16} className="text-blue-500" /> Dados pessoais
             </h3>
             <Input label="Nome completo" value={form.name} onChange={set('name')} placeholder="Seu nome" />
@@ -96,13 +135,13 @@ export default function ConfiguracoesPage() {
         {/* Sair */}
         <Card>
           <CardContent className="p-4">
-            <Button variant="outline" className="w-full gap-2 text-red-600 border-red-200 hover:bg-red-50" onClick={logout}>
+            <Button variant="outline" className="w-full gap-2 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={logout}>
               <LogOut size={16} /> Sair da conta
             </Button>
           </CardContent>
         </Card>
 
-        <div className="text-center text-xs text-slate-400 pb-4">
+        <div className="text-center text-xs text-slate-400 dark:text-slate-500 pb-4">
           MeuPet+ · versão 1.0.0
         </div>
       </div>

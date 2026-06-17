@@ -11,10 +11,10 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 const variants = {
   default:     'bg-blue-600 text-white hover:bg-blue-700 shadow-sm',
   secondary:   'bg-green-600 text-white hover:bg-green-700 shadow-sm',
-  outline:     'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
-  ghost:       'text-slate-600 hover:bg-slate-100',
+  outline:     'border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-600',
+  ghost:       'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700',
   destructive: 'bg-red-600 text-white hover:bg-red-700',
-  link:        'text-blue-600 hover:underline p-0 h-auto',
+  link:        'text-blue-600 dark:text-blue-400 hover:underline p-0 h-auto',
 }
 
 const sizes = {
