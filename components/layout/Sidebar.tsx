@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Heart, BookOpen, Calendar, Scale,
-  Wallet, Brain, Dumbbell, Star, FileText, Settings, LogOut
+  Wallet, Brain, Dumbbell, Star, FileText, Settings, LogOut, LifeBuoy
 } from 'lucide-react'
 
 const navItems = [
@@ -18,6 +18,7 @@ const navItems = [
   { href: '/adestramento',  icon: Dumbbell,        label: 'Adestramento IA', premium: true },
   { href: '/personalidade', icon: Star,            label: 'Personalidade IA', premium: true },
   { href: '/relatorios',    icon: FileText,        label: 'Relatórios', premium: true },
+  { href: '/suporte',       icon: LifeBuoy,        label: 'Suporte' },
   { href: '/configuracoes', icon: Settings,        label: 'Configurações' },
 ]
 
