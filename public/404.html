@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>MeuPet+</title>
+<script>
+  // Redireciona para index preservando o path (SPA routing no GitHub Pages)
+  var base = '/meupet-app';
+  var path = window.location.pathname.replace(base, '');
+  var qs   = window.location.search;
+  var hash = window.location.hash;
+  sessionStorage.setItem('spa_redirect', path + qs + hash);
+  window.location.replace(base + '/');
+</script>
+</head>
+<body></body>
+</html>
