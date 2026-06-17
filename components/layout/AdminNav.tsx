@@ -2,8 +2,9 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useTheme } from '@/components/ThemeProvider'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Users, CreditCard, LifeBuoy, ArrowLeft, Shield, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Users, CreditCard, LifeBuoy, ArrowLeft, Shield, LogOut, Menu, X, Sun, Moon } from 'lucide-react'
 import { useState } from 'react'
 
 const navItems = [
@@ -40,6 +41,7 @@ export function AdminNav() {
   const path = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const { theme, toggleTheme } = useTheme()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   async function logout() {
@@ -69,6 +71,12 @@ export function AdminNav() {
         </nav>
 
         <div className="p-4 border-t border-white/10 space-y-1">
+          {/* Toggle claro/escuro */}
+          <button onClick={toggleTheme}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-400 hover:bg-white/5 hover:text-white transition-all w-full">
+            {theme === 'dark' ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-blue-400" />}
+            {theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+          </button>
           <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-400 hover:bg-white/5 hover:text-white transition-all">
             <ArrowLeft size={16} /> Voltar ao app
           </Link>
@@ -97,6 +105,11 @@ export function AdminNav() {
               <NavLinks path={path} onClick={() => setMobileOpen(false)} />
             </nav>
             <div className="p-4 border-t border-white/10 space-y-1">
+              <button onClick={toggleTheme}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white w-full">
+                {theme === 'dark' ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} className="text-blue-400" />}
+                {theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+              </button>
               <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white">
                 <ArrowLeft size={16} /> Voltar ao app
               </Link>

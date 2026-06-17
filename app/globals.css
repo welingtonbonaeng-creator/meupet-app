@@ -53,19 +53,36 @@ body {
 
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 
-/* Admin panel: força cores escuras nos Cards independente do tema do usuário */
-.admin-main .bg-white                { background-color: rgb(30 41 59);   } /* slate-800 */
-.admin-main .border-slate-100        { border-color:     rgb(51 65 85);    } /* slate-700 */
-.admin-main .text-slate-900          { color:            rgb(241 245 249); } /* slate-100 */
-.admin-main .bg-slate-50             { background-color: rgb(15 23 42);    } /* slate-950 */
-.admin-main .text-slate-700          { color:            rgb(203 213 225); } /* slate-300 */
-.admin-main .text-slate-600          { color:            rgb(148 163 184); } /* slate-400 */
-.admin-main .text-slate-500          { color:            rgb(100 116 139); } /* slate-500 */
-.admin-main .bg-slate-100            { background-color: rgb(51 65 85);    } /* slate-700 */
-.admin-main .border-slate-200        { border-color:     rgb(51 65 85);    } /* slate-700 */
-.admin-main select, .admin-main input, .admin-main textarea {
-  background-color: rgb(30 41 59);
-  border-color:     rgb(51 65 85);
-  color:            rgb(241 245 249);
+/* ═══ ADMIN PANEL — modo claro (padrão) ═══════════════════════════════ */
+/* Texto: converte cores claras (pensadas p/ fundo escuro) para texto legível no claro */
+.admin-main .text-slate-100 { color: #0f172a; }
+.admin-main .text-slate-200 { color: #1e293b; }
+.admin-main .text-slate-300 { color: #334155; }
+.admin-main .text-slate-400 { color: #475569; }
+.admin-main .text-slate-500 { color: #64748b; }
+/* Fundos de seções internas */
+.admin-main .bg-slate-800    { background-color: #f8fafc; }
+.admin-main .border-slate-700{ border-color:     #e2e8f0; }
+.admin-main .border-slate-800{ border-color:     #e2e8f0; }
+.admin-main .bg-slate-700    { background-color: #e2e8f0; }
+/* Inputs / selects / textareas */
+.admin-main select,.admin-main input,.admin-main textarea {
+  background-color: #ffffff; border-color: #e2e8f0; color: #0f172a;
 }
-.admin-main select option { background-color: rgb(15 23 42); }
+
+/* ═══ ADMIN PANEL — modo escuro (.dark no <html>) ══════════════════════ */
+.dark .admin-main .text-slate-100 { color: #f1f5f9; }
+.dark .admin-main .text-slate-200 { color: #e2e8f0; }
+.dark .admin-main .text-slate-300 { color: #cbd5e1; }
+.dark .admin-main .text-slate-400 { color: #94a3b8; }
+.dark .admin-main .text-slate-500 { color: #64748b; }
+.dark .admin-main .bg-white       { background-color: #1e293b; }
+.dark .admin-main .border-slate-100{ border-color:    #334155; }
+.dark .admin-main .bg-slate-800   { background-color: #1e293b; }
+.dark .admin-main .border-slate-700{ border-color:    #334155; }
+.dark .admin-main .border-slate-800{ border-color:    #1e293b; }
+.dark .admin-main .bg-slate-700   { background-color: #334155; }
+.dark .admin-main select,.dark .admin-main input,.dark .admin-main textarea {
+  background-color: #1e293b; border-color: #334155; color: #f1f5f9;
+}
+.dark .admin-main select option { background-color: #0f172a; }

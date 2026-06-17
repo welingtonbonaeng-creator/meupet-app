@@ -10,16 +10,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const supabase = createClient()
   const [checking, setChecking] = useState(true)
 
-  // Forçar dark mode enquanto no painel admin, restaurar ao sair
-  useEffect(() => {
-    const html = document.documentElement
-    const hadDark = html.classList.contains('dark')
-    html.classList.add('dark')
-    return () => {
-      if (!hadDark) html.classList.remove('dark')
-    }
-  }, [])
-
   useEffect(() => {
     async function check() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -49,7 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-950">
+    <div className="flex min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
       <AdminNav />
       <main className="admin-main flex-1 lg:ml-64 pt-14 lg:pt-0">
         {children}
