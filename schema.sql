@@ -6,7 +6,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ─── PROFILES (complementa auth.users) ───────────────
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
   id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name        TEXT NOT NULL,
   phone       TEXT,
@@ -20,7 +20,7 @@ CREATE TABLE profiles (
 );
 
 -- ─── PETS ─────────────────────────────────────────────
-CREATE TABLE pets (
+CREATE TABLE IF NOT EXISTS pets (
   id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id       UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   name          TEXT NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE pets (
 );
 
 -- ─── PESO HISTÓRICO ───────────────────────────────────
-CREATE TABLE pet_weight_history (
+CREATE TABLE IF NOT EXISTS pet_weight_history (
   id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   pet_id     UUID NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
   weight_kg  NUMERIC(5,2) NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE pet_weight_history (
 );
 
 -- ─── DIÁRIO (eventos gerais) ──────────────────────────
-CREATE TABLE pet_diary (
+CREATE TABLE IF NOT EXISTS pet_diary (
   id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   pet_id       UUID NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
   type         TEXT NOT NULL CHECK (type IN ('vaccine','deworming','appointment','grooming','bath','surgery','medication','exam','weight','note','other')),
@@ -70,7 +70,7 @@ CREATE TABLE pet_diary (
 );
 
 -- ─── NOTIFICAÇÕES ─────────────────────────────────────
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
   id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id      UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   pet_id       UUID REFERENCES pets(id) ON DELETE CASCADE,
@@ -85,7 +85,7 @@ CREATE TABLE notifications (
 );
 
 -- ─── RELATÓRIOS DE NUTRIÇÃO (cache IA) ───────────────
-CREATE TABLE nutrition_reports (
+CREATE TABLE IF NOT EXISTS nutrition_reports (
   id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   pet_id       UUID NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
   weight_kg    NUMERIC(5,2),
@@ -97,7 +97,7 @@ CREATE TABLE nutrition_reports (
 );
 
 -- ─── PLANOS DE ADESTRAMENTO (cache IA) ───────────────
-CREATE TABLE training_plans (
+CREATE TABLE IF NOT EXISTS training_plans (
   id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   pet_id      UUID NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
   problem     TEXT NOT NULL,
@@ -108,7 +108,7 @@ CREATE TABLE training_plans (
 );
 
 -- ─── PERSONALIDADE (cache IA) ─────────────────────────
-CREATE TABLE pet_personality (
+CREATE TABLE IF NOT EXISTS pet_personality (
   id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   pet_id          UUID NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
   profile_text    TEXT,
@@ -119,7 +119,7 @@ CREATE TABLE pet_personality (
 );
 
 -- ─── GASTOS ───────────────────────────────────────────
-CREATE TABLE pet_expenses (
+CREATE TABLE IF NOT EXISTS pet_expenses (
   id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   pet_id       UUID NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
   category     TEXT NOT NULL CHECK (category IN ('vet','food','grooming','medicine','accessory','vaccine','exam','other')),
@@ -132,7 +132,7 @@ CREATE TABLE pet_expenses (
 );
 
 -- ─── DOCUMENTOS (exames, receitas) ───────────────────
-CREATE TABLE pet_documents (
+CREATE TABLE IF NOT EXISTS pet_documents (
   id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   pet_id       UUID NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
   diary_id     UUID REFERENCES pet_diary(id) ON DELETE SET NULL,
@@ -143,7 +143,7 @@ CREATE TABLE pet_documents (
 );
 
 -- ─── ASSINATURAS ──────────────────────────────────────
-CREATE TABLE subscriptions (
+CREATE TABLE IF NOT EXISTS subscriptions (
   id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id             UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   plan                TEXT NOT NULL CHECK (plan IN ('free','family','premium')),
@@ -159,7 +159,7 @@ CREATE TABLE subscriptions (
 );
 
 -- ─── LOGS DE AUDITORIA ────────────────────────────────
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
   id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id     UUID REFERENCES profiles(id) ON DELETE SET NULL,
   action      TEXT NOT NULL,
@@ -169,6 +169,19 @@ CREATE TABLE audit_logs (
   new_data    JSONB,
   ip_address  TEXT,
   created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ─── CONCLUSÕES DE ADESTRAMENTO ───────────────────────
+CREATE TABLE IF NOT EXISTS training_completions (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  pet_id         UUID NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+  semana         INT NOT NULL,
+  exercicio_idx  INT NOT NULL,
+  exercicio_nome TEXT NOT NULL,
+  completed_at   DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_at     TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (user_id, pet_id, semana, exercicio_idx)
 );
 
 -- ═══════════════════════════════════════════════════════
@@ -233,50 +246,69 @@ CREATE TRIGGER diary_notification_trigger
 -- ROW LEVEL SECURITY
 -- ═══════════════════════════════════════════════════════
 
-ALTER TABLE profiles          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE pets              ENABLE ROW LEVEL SECURITY;
-ALTER TABLE pet_weight_history ENABLE ROW LEVEL SECURITY;
-ALTER TABLE pet_diary         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE notifications     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE nutrition_reports ENABLE ROW LEVEL SECURITY;
-ALTER TABLE training_plans    ENABLE ROW LEVEL SECURITY;
-ALTER TABLE pet_personality   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE pet_expenses      ENABLE ROW LEVEL SECURITY;
-ALTER TABLE pet_documents     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE subscriptions     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE audit_logs        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profiles             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pets                 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pet_weight_history   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pet_diary            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE nutrition_reports    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE training_plans       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE training_completions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pet_personality      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pet_expenses         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pet_documents        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE subscriptions        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs           ENABLE ROW LEVEL SECURITY;
 
 -- Profiles
+DROP POLICY IF EXISTS "users can read own profile"   ON profiles;
+DROP POLICY IF EXISTS "users can update own profile" ON profiles;
+DROP POLICY IF EXISTS "service_role bypass profiles" ON profiles;
 CREATE POLICY "users can read own profile"   ON profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "service_role bypass profiles" ON profiles TO service_role USING (true) WITH CHECK (true);
 
 -- Pets
+DROP POLICY IF EXISTS "users own pets" ON pets;
 CREATE POLICY "users own pets" ON pets FOR ALL USING (auth.uid() = user_id);
 
 -- Pet data (via pet ownership)
+DROP POLICY IF EXISTS "users own weight history" ON pet_weight_history;
 CREATE POLICY "users own weight history" ON pet_weight_history FOR ALL
   USING (EXISTS (SELECT 1 FROM pets WHERE pets.id = pet_id AND pets.user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "users own diary" ON pet_diary;
 CREATE POLICY "users own diary" ON pet_diary FOR ALL
   USING (EXISTS (SELECT 1 FROM pets WHERE pets.id = pet_id AND pets.user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "users own notifications" ON notifications;
 CREATE POLICY "users own notifications" ON notifications FOR ALL USING (auth.uid() = user_id);
 
-CREATE POLICY "users own nutrition"     ON nutrition_reports FOR ALL
+DROP POLICY IF EXISTS "users own nutrition" ON nutrition_reports;
+CREATE POLICY "users own nutrition" ON nutrition_reports FOR ALL
   USING (EXISTS (SELECT 1 FROM pets WHERE pets.id = pet_id AND pets.user_id = auth.uid()));
 
-CREATE POLICY "users own training"      ON training_plans FOR ALL
+DROP POLICY IF EXISTS "users own training" ON training_plans;
+CREATE POLICY "users own training" ON training_plans FOR ALL
   USING (EXISTS (SELECT 1 FROM pets WHERE pets.id = pet_id AND pets.user_id = auth.uid()));
 
-CREATE POLICY "users own personality"   ON pet_personality FOR ALL
+DROP POLICY IF EXISTS "users manage own completions" ON training_completions;
+CREATE POLICY "users manage own completions" ON training_completions FOR ALL TO authenticated
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "users own personality" ON pet_personality;
+CREATE POLICY "users own personality" ON pet_personality FOR ALL
   USING (EXISTS (SELECT 1 FROM pets WHERE pets.id = pet_id AND pets.user_id = auth.uid()));
 
-CREATE POLICY "users own expenses"      ON pet_expenses FOR ALL
+DROP POLICY IF EXISTS "users own expenses" ON pet_expenses;
+CREATE POLICY "users own expenses" ON pet_expenses FOR ALL
   USING (EXISTS (SELECT 1 FROM pets WHERE pets.id = pet_id AND pets.user_id = auth.uid()));
 
-CREATE POLICY "users own documents"     ON pet_documents FOR ALL
+DROP POLICY IF EXISTS "users own documents" ON pet_documents;
+CREATE POLICY "users own documents" ON pet_documents FOR ALL
   USING (EXISTS (SELECT 1 FROM pets WHERE pets.id = pet_id AND pets.user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "users own subscriptions" ON subscriptions;
 CREATE POLICY "users own subscriptions" ON subscriptions FOR ALL USING (auth.uid() = user_id);
 
 -- ═══════════════════════════════════════════════════════
