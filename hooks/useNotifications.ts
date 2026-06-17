@@ -62,12 +62,16 @@ export function useNotifications() {
 
       if (!events || events.length === 0) return
 
-      // Filtrar só os do usuário (join pode trazer null)
-      const mine = events.filter(e => (e as { pets: { name: string } | null }).pets !== null)
+      // Filtrar só os do usuário (join pode trazer null ou array vazio)
+      const mine = events.filter(e => {
+        const p = (e as unknown as { pets: unknown }).pets
+        return p !== null && p !== undefined && (!Array.isArray(p) || p.length > 0)
+      })
       if (mine.length === 0) return
 
       const notifications = mine.map(e => {
-        const pet = (e as { pets: { name: string } }).pets
+        const raw = (e as unknown as { pets: { name: string } | { name: string }[] }).pets
+        const pet = Array.isArray(raw) ? raw[0] : raw
         const icon = ICON_MAP[e.type] ?? '📋'
         const isToday = e.next_date === td
         return {
