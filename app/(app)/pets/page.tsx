@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 import { usePets, useDiary, useWeightHistory } from '@/hooks/usePets'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card, CardContent } from '@/components/ui/card'
@@ -9,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Modal } from '@/components/ui/modal'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
+import { PetPhotoUpload } from '@/components/PetPhotoUpload'
 import { formatDate, petAge, weightStatus, speciesEmoji, getInitials } from '@/lib/utils'
 import { DIARY_TYPE_LABELS, DIARY_TYPE_ICONS, type DiaryType } from '@/types'
 import {
@@ -21,10 +23,21 @@ const DIARY_TYPES: DiaryType[] = ['vaccine','appointment','deworming','exam','me
 // ── Detail view (quando ?id= está presente) ─────────────────────────────────
 
 function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
+  const supabase = createClient()
   const { pets, updatePet, deletePet } = usePets()
   const { entries, addEntry, deleteEntry } = useDiary(id)
   const { history, addWeight } = useWeightHistory(id)
   const pet = pets.find(p => p.id === id)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null))
+  }, [])
+
+  useEffect(() => {
+    if (pet) setPhotoUrl(pet.photo_url ?? null)
+  }, [pet?.photo_url])
 
   const [tab, setTab]           = useState<'diary'|'weight'>('diary')
   const [modalDiary, setModalDiary]   = useState(false)
@@ -82,9 +95,20 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
         <Card>
           <CardContent className="p-5">
             <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-4xl flex-shrink-0">
-                {pet.photo_url ? <img src={pet.photo_url} alt={pet.name} className="w-full h-full object-cover" /> : speciesEmoji(pet.species)}
-              </div>
+              {userId ? (
+                <PetPhotoUpload
+                  petId={id}
+                  userId={userId}
+                  currentUrl={photoUrl}
+                  petName={pet.name}
+                  size="lg"
+                  onUploaded={url => setPhotoUrl(url)}
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 flex items-center justify-center text-4xl flex-shrink-0">
+                  {photoUrl ? <img src={photoUrl} alt={pet.name} className="w-full h-full object-cover" /> : speciesEmoji(pet.species)}
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <h2 className="text-xl font-bold text-slate-800">{pet.name}</h2>
