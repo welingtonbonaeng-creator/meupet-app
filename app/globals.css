@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Tailwind v4: dark mode via classe .dark no <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #0f172a;
@@ -16,6 +19,19 @@
   --accent-foreground: #1e40af;
   --destructive: #dc2626;
   --radius: 0.75rem;
+}
+
+/* Variáveis para modo escuro */
+.dark {
+  --background: #020617;
+  --foreground: #f1f5f9;
+  --card:       #1e293b;
+  --border:     #334155;
+  --input:      #334155;
+  --muted:      #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent:     #1e3a8a;
+  --accent-foreground: #bfdbfe;
 }
 
 @theme inline {
