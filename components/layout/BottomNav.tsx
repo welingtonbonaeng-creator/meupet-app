@@ -2,13 +2,13 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Heart, BookOpen, Calendar, Settings } from 'lucide-react'
+import { LayoutDashboard, Heart, BookOpen, Sparkles, Settings } from 'lucide-react'
 
 const items = [
   { href: '/dashboard',  icon: LayoutDashboard, label: 'Home' },
   { href: '/pets',       icon: Heart,           label: 'Pets' },
   { href: '/diario',     icon: BookOpen,        label: 'Diário' },
-  { href: '/calendario', icon: Calendar,        label: 'Agenda' },
+  { href: '/nutricao',   icon: Sparkles,        label: 'IA' },
   { href: '/configuracoes', icon: Settings,     label: 'Config' },
 ]
 
