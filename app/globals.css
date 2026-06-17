@@ -52,3 +52,20 @@ body {
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+/* Admin panel: força cores escuras nos Cards independente do tema do usuário */
+.admin-main .bg-white                { background-color: rgb(30 41 59);   } /* slate-800 */
+.admin-main .border-slate-100        { border-color:     rgb(51 65 85);    } /* slate-700 */
+.admin-main .text-slate-900          { color:            rgb(241 245 249); } /* slate-100 */
+.admin-main .bg-slate-50             { background-color: rgb(15 23 42);    } /* slate-950 */
+.admin-main .text-slate-700          { color:            rgb(203 213 225); } /* slate-300 */
+.admin-main .text-slate-600          { color:            rgb(148 163 184); } /* slate-400 */
+.admin-main .text-slate-500          { color:            rgb(100 116 139); } /* slate-500 */
+.admin-main .bg-slate-100            { background-color: rgb(51 65 85);    } /* slate-700 */
+.admin-main .border-slate-200        { border-color:     rgb(51 65 85);    } /* slate-700 */
+.admin-main select, .admin-main input, .admin-main textarea {
+  background-color: rgb(30 41 59);
+  border-color:     rgb(51 65 85);
+  color:            rgb(241 245 249);
+}
+.admin-main select option { background-color: rgb(15 23 42); }
