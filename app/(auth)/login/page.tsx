@@ -8,9 +8,8 @@ import { Input }  from '@/components/ui/input'
 import { Mail, Lock, CheckCircle } from 'lucide-react'
 
 const TEST_ACCOUNTS = [
-  { label: 'Admin (premium)', email: 'admin@meupet.com',  password: 'MeuPet@2026' },
-  { label: 'João (usuário)',  email: 'joao@meupet.com',   password: 'MeuPet@2026' },
-  { label: 'Maria (usuário)', email: 'maria@meupet.com',  password: 'MeuPet@2026' },
+  { label: 'João (usuário)',  email: 'joao@meupet.com',  password: 'MeuPet@2026' },
+  { label: 'Maria (usuário)', email: 'maria@meupet.com', password: 'MeuPet@2026' },
 ]
 
 export default function LoginPage() {
@@ -29,10 +28,19 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(''); setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword(form)
+    const { data, error } = await supabase.auth.signInWithPassword(form)
+    if (error) { setLoading(false); setError('E-mail ou senha incorretos'); return }
+
+    // Verifica se é admin e redireciona para o painel correto
+    const { data: profile } = await supabase
+      .from('profiles').select('role').eq('id', data.user.id).single()
+
     setLoading(false)
-    if (error) { setError('E-mail ou senha incorretos'); return }
-    router.push('/dashboard')
+    if (profile?.role === 'admin') {
+      router.push('/admin/dashboard')
+    } else {
+      router.push('/dashboard')
+    }
   }
 
   function fillAccount(acc: typeof TEST_ACCOUNTS[0]) {
