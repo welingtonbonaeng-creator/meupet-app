@@ -1,11 +1,11 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input }  from '@/components/ui/input'
-import { Mail, Lock } from 'lucide-react'
+import { Mail, Lock, CheckCircle } from 'lucide-react'
 
 const TEST_ACCOUNTS = [
   { label: 'Admin (premium)', email: 'admin@meupet.com',  password: 'MeuPet@2026' },
@@ -16,9 +16,15 @@ const TEST_ACCOUNTS = [
 export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
-  const [form, setForm]     = useState({ email: '', password: '' })
-  const [error, setError]   = useState('')
-  const [loading, setLoading] = useState(false)
+  const [form, setForm]         = useState({ email: '', password: '' })
+  const [error, setError]       = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [justRegistered, setJustRegistered] = useState(false)
+
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search)
+    if (p.get('registered') === '1') setJustRegistered(true)
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -53,6 +59,13 @@ export default function LoginPage() {
       </div>
       {/* === FIM CREDENCIAIS DE TESTE === */}
 
+      {justRegistered && (
+        <div className="mb-4 p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm flex items-center gap-2">
+          <CheckCircle size={16} className="shrink-0" />
+          Conta criada com sucesso! Faça login para continuar.
+        </div>
+      )}
+
       {error && <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -68,7 +81,7 @@ export default function LoginPage() {
 
       <p className="text-center text-sm text-slate-500 mt-6">
         Não tem conta?{' '}
-        <Link href="/register" className="text-blue-600 font-semibold hover:underline">Cadastre-se grátis</Link>
+        <Link href="/register" className="text-blue-600 font-semibold hover:underline">Solicitar acesso</Link>
       </p>
     </>
   )

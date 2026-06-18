@@ -4,13 +4,14 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useTheme } from '@/components/ThemeProvider'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Users, CreditCard, LifeBuoy, ArrowLeft, Shield, LogOut, Menu, X, Sun, Moon } from 'lucide-react'
+import { LayoutDashboard, Users, CreditCard, LifeBuoy, ArrowLeft, Shield, LogOut, Menu, X, Sun, Moon, Key } from 'lucide-react'
 import { useState } from 'react'
 
 const navItems = [
   { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/admin/usuarios',  icon: Users,           label: 'Usuários' },
   { href: '/admin/vendas',    icon: CreditCard,      label: 'Vendas' },
+  { href: '/admin/tokens',    icon: Key,             label: 'Tokens' },
   { href: '/admin/suporte',   icon: LifeBuoy,        label: 'Suporte' },
 ]
 
