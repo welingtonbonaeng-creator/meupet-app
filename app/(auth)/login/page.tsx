@@ -4,20 +4,15 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Input }  from '@/components/ui/input'
+import { Input } from '@/components/ui/input'
 import { Mail, Lock, CheckCircle } from 'lucide-react'
-
-const TEST_ACCOUNTS = [
-  { label: 'João (usuário)',  email: 'joao@meupet.com',  password: 'MeuPet@2026' },
-  { label: 'Maria (usuário)', email: 'maria@meupet.com', password: 'MeuPet@2026' },
-]
 
 export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
-  const [form, setForm]         = useState({ email: '', password: '' })
-  const [error, setError]       = useState('')
-  const [loading, setLoading]   = useState(false)
+  const [form, setForm]       = useState({ email: '', password: '' })
+  const [error, setError]     = useState('')
+  const [loading, setLoading] = useState(false)
   const [justRegistered, setJustRegistered] = useState(false)
 
   useEffect(() => {
@@ -31,7 +26,6 @@ export default function LoginPage() {
     const { data, error } = await supabase.auth.signInWithPassword(form)
     if (error) { setLoading(false); setError('E-mail ou senha incorretos'); return }
 
-    // Verifica se é admin e redireciona para o painel correto
     const { data: profile } = await supabase
       .from('profiles').select('role').eq('id', data.user.id).single()
 
@@ -43,29 +37,10 @@ export default function LoginPage() {
     }
   }
 
-  function fillAccount(acc: typeof TEST_ACCOUNTS[0]) {
-    setForm({ email: acc.email, password: acc.password })
-  }
-
   return (
     <>
       <h2 className="text-xl font-bold text-slate-800 mb-1">Bem-vindo de volta!</h2>
       <p className="text-sm text-slate-500 mb-6">Acesse sua conta para ver seus pets</p>
-
-      {/* === CREDENCIAIS DE TESTE — REMOVER ANTES DO LANÇAMENTO === */}
-      <div className="mb-5 p-3 rounded-xl bg-amber-50 border border-amber-200">
-        <p className="text-xs font-semibold text-amber-800 mb-2">🧪 Contas de teste (clicar para preencher):</p>
-        <div className="space-y-1">
-          {TEST_ACCOUNTS.map(acc => (
-            <button key={acc.email} type="button" onClick={() => fillAccount(acc)}
-              className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-amber-100 transition-colors">
-              <span className="text-xs font-medium text-amber-900">{acc.label}</span>
-              <span className="block text-xs text-amber-700 font-mono">{acc.email} · {acc.password}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-      {/* === FIM CREDENCIAIS DE TESTE === */}
 
       {justRegistered && (
         <div className="mb-4 p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm flex items-center gap-2">
