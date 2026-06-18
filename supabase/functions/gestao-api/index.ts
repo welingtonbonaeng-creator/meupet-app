@@ -86,7 +86,111 @@ serve(async (req) => {
         return json({ ok: true })
       }
 
-      // ── MÉTRICAS ───────────────────────────────────────────────────
+      // ── DASHBOARD ─────────────────────────────────────────────────
+      case 'get_dashboard': {
+        const [{ data: users }, { data: pets }, { data: tickets }] = await Promise.all([
+          admin.from('profiles').select('id, name, email, plan, created_at').order('created_at', { ascending: false }),
+          admin.from('pets').select('id'),
+          admin.from('support_tickets').select('id, status'),
+        ])
+
+        const plans = { premium: 0, family: 0, free: 0 } as Record<string, number>
+        users?.forEach(u => { if (plans[u.plan] !== undefined) plans[u.plan]++ })
+
+        const now = new Date()
+        const thisMonth = users?.filter(u => {
+          const d = new Date(u.created_at)
+          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+        }).length ?? 0
+
+        // Crescimento mensal — últimos 6 meses
+        const monthly: { month: string; total: number; paying: number }[] = []
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+          const label = d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+          const total = users?.filter(u => {
+            const ud = new Date(u.created_at)
+            return ud.getMonth() === d.getMonth() && ud.getFullYear() === d.getFullYear()
+          }).length ?? 0
+          const paying = users?.filter(u => {
+            const ud = new Date(u.created_at)
+            return ud.getMonth() === d.getMonth() && ud.getFullYear() === d.getFullYear()
+              && (u.plan === 'premium' || u.plan === 'family')
+          }).length ?? 0
+          monthly.push({ month: label, total, paying })
+        }
+
+        const mrr = (plans.premium * 49.90) + (plans.family * 29.90)
+        const total = users?.length ?? 0
+        const paying = plans.premium + plans.family
+
+        return json({
+          total_users: total,
+          total_pets: pets?.length ?? 0,
+          open_tickets: tickets?.filter(t => t.status === 'open').length ?? 0,
+          in_progress_tickets: tickets?.filter(t => t.status === 'in_progress').length ?? 0,
+          mrr: mrr.toFixed(2),
+          arr: (mrr * 12).toFixed(2),
+          arpu: paying > 0 ? (mrr / paying).toFixed(2) : '0.00',
+          conversion_rate: total > 0 ? ((paying / total) * 100).toFixed(1) : '0',
+          new_this_month: thisMonth,
+          plans,
+          monthly_growth: monthly,
+          recent_users: users?.slice(0, 6).map(u => ({ name: u.name, email: u.email, plan: u.plan, created_at: u.created_at })) ?? [],
+        })
+      }
+
+      // ── FATURAMENTO ────────────────────────────────────────────────
+      case 'get_faturamento': {
+        const { data: users } = await admin
+          .from('profiles')
+          .select('id, name, email, plan, created_at')
+          .in('plan', ['premium', 'family'])
+          .order('created_at', { ascending: false })
+
+        const { data: allUsers } = await admin.from('profiles').select('id, plan')
+
+        const plans = { premium: 0, family: 0, free: 0 } as Record<string, number>
+        allUsers?.forEach(u => { if (plans[u.plan] !== undefined) plans[u.plan]++ })
+
+        const premiumRev = plans.premium * 49.90
+        const familyRev  = plans.family  * 29.90
+        const mrr = premiumRev + familyRev
+        const paying = plans.premium + plans.family
+        const total = (allUsers?.length ?? 0)
+
+        // Receita mensal últimos 6 meses (baseado em data de cadastro pagantes)
+        const now = new Date()
+        const monthly_revenue: { month: string; mrr: number; new_paying: number }[] = []
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+          const label = d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+          const newPaying = users?.filter(u => {
+            const ud = new Date(u.created_at)
+            return ud.getMonth() === d.getMonth() && ud.getFullYear() === d.getFullYear()
+          }) ?? []
+          const monthMRR = newPaying.reduce((acc, u) => acc + (u.plan === 'premium' ? 49.90 : 29.90), 0)
+          monthly_revenue.push({ month: label, mrr: monthMRR, new_paying: newPaying.length })
+        }
+
+        return json({
+          mrr: mrr.toFixed(2),
+          arr: (mrr * 12).toFixed(2),
+          arpu: paying > 0 ? (mrr / paying).toFixed(2) : '0.00',
+          conversion_rate: total > 0 ? ((paying / total) * 100).toFixed(1) : '0',
+          premium_count: plans.premium,
+          premium_revenue: premiumRev.toFixed(2),
+          family_count: plans.family,
+          family_revenue: familyRev.toFixed(2),
+          monthly_revenue,
+          paying_users: users?.map(u => ({
+            name: u.name, email: u.email, plan: u.plan, created_at: u.created_at,
+            monthly_value: u.plan === 'premium' ? 49.90 : 29.90,
+          })) ?? [],
+        })
+      }
+
+      // ── MÉTRICAS (legado) ──────────────────────────────────────────
       case 'get_stats': {
         const [{ data: users }, { data: pets }, { data: tickets }] = await Promise.all([
           admin.from('profiles').select('id, plan, created_at'),

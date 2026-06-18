@@ -4,12 +4,14 @@ import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { gestao } from '@/lib/gestao'
 import Link from 'next/link'
-import { Users, LifeBuoy, Key, LogOut, Shield, Menu, X, BarChart2 } from 'lucide-react'
+import { Users, LifeBuoy, Key, LogOut, Shield, Menu, X, BarChart2, DollarSign, LayoutDashboard } from 'lucide-react'
 
 const navItems = [
-  { href: '/gestao/usuarios', icon: Users,    label: 'Usuários' },
-  { href: '/gestao/suporte',  icon: LifeBuoy, label: 'Suporte' },
-  { href: '/gestao/tokens',   icon: Key,      label: 'Tokens' },
+  { href: '/gestao/dashboard',   icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/gestao/faturamento', icon: DollarSign,      label: 'Faturamento' },
+  { href: '/gestao/usuarios',    icon: Users,            label: 'Usuários' },
+  { href: '/gestao/suporte',     icon: LifeBuoy,         label: 'Suporte' },
+  { href: '/gestao/tokens',      icon: Key,              label: 'Tokens' },
 ]
 
 function Sidebar({ onLogout, onClose }: { onLogout: () => void; onClose?: () => void }) {

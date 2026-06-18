@@ -4,6 +4,6 @@ import { useRouter } from 'next/navigation'
 
 export default function GestaoRoot() {
   const router = useRouter()
-  useEffect(() => { router.replace('/gestao/usuarios') }, [])
+  useEffect(() => { router.replace('/gestao/dashboard') }, [])
   return null
 }
