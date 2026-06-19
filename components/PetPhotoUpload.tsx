@@ -45,8 +45,7 @@ export function PetPhotoUpload({ petId, userId, currentUrl, petName, size = 'lg'
       const { data } = supabase.storage.from('pet-photos').getPublicUrl(path)
       const publicUrl = `${data.publicUrl}?t=${Date.now()}` // cache-busting
 
-      // Salvar URL no banco
-      await supabase.from('pets').update({ photo_url: publicUrl }).eq('id', petId)
+      // Pai é responsável por salvar no banco (via onUploaded)
       onUploaded(publicUrl)
     } catch (err) {
       console.error('Erro upload:', err)

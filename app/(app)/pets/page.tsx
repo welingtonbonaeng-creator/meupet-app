@@ -199,7 +199,10 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
                 petId={id} userId={userId}
                 currentUrl={photoUrl} petName={pet.name}
                 size="lg"
-                onUploaded={url => setPhotoUrl(url)}
+                onUploaded={async url => {
+                  setPhotoUrl(url)
+                  await updatePet(id, { photo_url: url })
+                }}
               />
             ) : (
               <div className="w-24 h-24 rounded-full bg-white dark:bg-slate-900 border-4 border-white dark:border-slate-800 shadow-lg flex items-center justify-center text-4xl">
