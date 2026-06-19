@@ -152,10 +152,10 @@ export default function NovoPetPage() {
   const ageMonthsCalc   = form.birth_date ? calcAgeMonths(form.birth_date) : null
 
   return (
-    <div>
+    <div className="flex flex-col h-full">
       <TopBar title="Novo Pet" subtitle="Preencha os dados do seu pet" />
 
-      <div className="p-4 lg:p-6 max-w-xl">
+      <div className="flex-1 overflow-auto p-4 pb-24 max-w-xl">
         {error && <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
