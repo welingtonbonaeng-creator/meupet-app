@@ -111,11 +111,11 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <h2 className="text-xl font-bold text-slate-800">{pet.name}</h2>
+                  <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{pet.name}</h2>
                   {pet.sex && <Badge variant="info">{pet.sex === 'male' ? '♂ Macho' : '♀ Fêmea'}</Badge>}
                 </div>
-                {pet.color && <div className="text-sm text-slate-500">{pet.color}</div>}
-                {pet.microchip && <div className="text-xs text-slate-400 mt-0.5">Chip: {pet.microchip}</div>}
+                {pet.color && <div className="text-sm text-slate-500 dark:text-slate-400">{pet.color}</div>}
+                {pet.microchip && <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Chip: {pet.microchip}</div>}
                 <div className="flex gap-2 mt-3">
                   <Button size="sm" variant="outline" className="gap-1 text-red-600 border-red-200 hover:bg-red-50" onClick={() => setModalDelete(true)}>
                     <Trash2 size={12} /> Excluir
@@ -123,23 +123,23 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-50">
-              <div className="text-center">
-                <div className="text-lg font-bold text-slate-800">{pet.weight_kg ? `${pet.weight_kg} kg` : '—'}</div>
-                <div className="text-xs text-slate-500">Peso atual</div>
-                {ws && <div className={`text-xs font-medium mt-0.5 ${ws.color}`}>{ws.icon} {ws.label}</div>}
+            <div className="grid grid-cols-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 divide-x divide-y divide-slate-100 dark:divide-slate-700">
+              <div className="text-center py-3 px-2">
+                <div className="text-xl font-bold text-slate-800 dark:text-slate-100">{pet.weight_kg ? `${pet.weight_kg} kg` : '—'}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Peso atual</div>
+                {ws && <div className={`text-xs font-semibold mt-1 ${ws.color}`}>{ws.icon} {ws.label}</div>}
               </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-slate-800">{pet.ideal_weight ? `${pet.ideal_weight} kg` : '—'}</div>
-                <div className="text-xs text-slate-500">Peso ideal</div>
+              <div className="text-center py-3 px-2">
+                <div className="text-xl font-bold text-slate-800 dark:text-slate-100">{pet.ideal_weight ? `${pet.ideal_weight} kg` : '—'}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Peso ideal</div>
               </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-slate-800">{pet.birth_date ? petAge(pet.birth_date) : '—'}</div>
-                <div className="text-xs text-slate-500">Idade</div>
+              <div className="text-center py-3 px-2">
+                <div className="text-xl font-bold text-slate-800 dark:text-slate-100">{pet.birth_date ? petAge(pet.birth_date) : '—'}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Idade</div>
               </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-slate-800">{entries.length}</div>
-                <div className="text-xs text-slate-500">Registros</div>
+              <div className="text-center py-3 px-2">
+                <div className="text-xl font-bold text-slate-800 dark:text-slate-100">{entries.length}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Registros</div>
               </div>
             </div>
           </CardContent>
@@ -148,14 +148,14 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
         {pet.notes && (
           <Card><CardContent className="p-4">
             <div className="text-xs font-semibold text-slate-500 mb-1">OBSERVAÇÕES</div>
-            <p className="text-sm text-slate-700">{pet.notes}</p>
+            <p className="text-sm text-slate-700 dark:text-slate-200">{pet.notes}</p>
           </CardContent></Card>
         )}
 
-        <div className="flex bg-slate-100 rounded-xl p-1">
+        <div className="flex bg-slate-100 dark:bg-slate-700/60 rounded-xl p-1">
           {[['diary','📖 Diário'],['weight','⚖️ Peso']].map(([t, label]) => (
             <button key={t} type="button" onClick={() => setTab(t as 'diary'|'weight')}
-              className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-all ${tab === t ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500'}`}>
+              className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-all ${tab === t ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-100 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}>
               {label}
             </button>
           ))}
@@ -173,16 +173,16 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
                 {entries.map(e => (
                   <Card key={e.id}><CardContent className="p-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-lg flex-shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-lg flex-shrink-0">
                         {DIARY_TYPE_ICONS[e.type]}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-semibold text-slate-800 text-sm">{e.title}</span>
-                          <button onClick={() => deleteEntry(e.id)} className="text-slate-300 hover:text-red-500 flex-shrink-0"><Trash2 size={14} /></button>
+                          <span className="font-semibold text-slate-800 dark:text-slate-100 text-sm">{e.title}</span>
+                          <button onClick={() => deleteEntry(e.id)} className="text-slate-300 dark:text-slate-600 dark:text-slate-300 hover:text-red-500 flex-shrink-0"><Trash2 size={14} /></button>
                         </div>
-                        <div className="text-xs text-slate-500 mt-0.5">{DIARY_TYPE_LABELS[e.type]} · {formatDate(e.occurred_at)}</div>
-                        {e.description && <div className="text-xs text-slate-600 mt-1">{e.description}</div>}
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{DIARY_TYPE_LABELS[e.type]} · {formatDate(e.occurred_at)}</div>
+                        {e.description && <div className="text-xs text-slate-600 dark:text-slate-300 mt-1">{e.description}</div>}
                         {e.next_date && <div className="text-xs text-amber-600 mt-1 flex items-center gap-1"><Calendar size={10} /> Próximo: {formatDate(e.next_date)}</div>}
                       </div>
                     </div>
@@ -208,8 +208,8 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
                       <div className="flex items-center gap-3">
                         <Scale size={16} className="text-blue-500" />
                         <div>
-                          <span className="font-bold text-slate-800">{h.weight_kg} kg</span>
-                          {h.notes && <div className="text-xs text-slate-500">{h.notes}</div>}
+                          <span className="font-bold text-slate-800 dark:text-slate-100">{h.weight_kg} kg</span>
+                          {h.notes && <div className="text-xs text-slate-500 dark:text-slate-400">{h.notes}</div>}
                         </div>
                       </div>
                       <div className="text-xs text-slate-400">{formatDate(h.measured_at)}</div>
@@ -241,8 +241,8 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
               onChange={e => setDiaryForm(p => ({ ...p, vet_name: e.target.value }))} />
           )}
           <div>
-            <label className="text-sm font-semibold text-slate-700 block mb-1.5">Observações</label>
-            <textarea className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 block mb-1.5">Observações</label>
+            <textarea className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
               rows={2} value={diaryForm.description} onChange={e => setDiaryForm(p => ({ ...p, description: e.target.value }))} />
           </div>
           <div className="flex gap-2 pt-2">
@@ -270,8 +270,8 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
       <Modal open={modalDelete} onClose={() => setModalDelete(false)} title="Excluir pet">
         <div className="p-5 text-center">
           <AlertTriangle size={48} className="text-red-500 mx-auto mb-3" />
-          <p className="text-slate-700 mb-1">Tem certeza que quer excluir <strong>{pet.name}</strong>?</p>
-          <p className="text-sm text-slate-500 mb-5">Esta ação não pode ser desfeita.</p>
+          <p className="text-slate-700 dark:text-slate-200 mb-1">Tem certeza que quer excluir <strong>{pet.name}</strong>?</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Esta ação não pode ser desfeita.</p>
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => setModalDelete(false)}>Cancelar</Button>
             <Button variant="destructive" className="flex-1" onClick={confirmDelete}>Excluir</Button>
@@ -318,8 +318,8 @@ export default function PetsPage() {
         ) : pets.length === 0 ? (
           <Card><CardContent className="p-12 text-center">
             <div className="text-5xl mb-4">🐾</div>
-            <h3 className="font-bold text-slate-700 mb-2">Nenhum pet ainda</h3>
-            <p className="text-slate-500 text-sm mb-6">Cadastre seu primeiro pet para acompanhar a saúde dele</p>
+            <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-2">Nenhum pet ainda</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Cadastre seu primeiro pet para acompanhar a saúde dele</p>
             <Link href="/meupet-app/pets/novo/"><Button size="lg">Cadastrar primeiro pet</Button></Link>
           </CardContent></Card>
         ) : (
@@ -334,12 +334,12 @@ export default function PetsPage() {
                   <Card className="hover:shadow-md transition-shadow cursor-pointer">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-3xl flex-shrink-0">
+                        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/40 dark:to-blue-800/20 flex items-center justify-center text-3xl flex-shrink-0">
                           {pet.photo_url ? <img src={pet.photo_url} alt={pet.name} className="w-full h-full object-cover" /> : speciesEmoji(pet.species)}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-bold text-slate-800 text-base">{pet.name}</span>
+                            <span className="font-bold text-slate-800 dark:text-slate-100 text-base">{pet.name}</span>
                             {pet.sex && <Badge variant="info" className="text-xs">{pet.sex === 'male' ? '♂ Macho' : '♀ Fêmea'}</Badge>}
                           </div>
                           <div className="text-sm text-slate-500 mt-0.5">
@@ -352,7 +352,7 @@ export default function PetsPage() {
                             {ws && <span className={`text-xs font-medium ${ws.color}`}>{ws.icon} {ws.label}</span>}
                           </div>
                         </div>
-                        <ChevronRight size={18} className="text-slate-300 flex-shrink-0" />
+                        <ChevronRight size={18} className="text-slate-300 dark:text-slate-600 dark:text-slate-300 flex-shrink-0" />
                       </div>
                     </CardContent>
                   </Card>

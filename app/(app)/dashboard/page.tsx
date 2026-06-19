@@ -75,11 +75,11 @@ export default function DashboardPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
                   <Heart size={20} className="text-blue-600" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-slate-800">{pets.length}</div>
+                  <div className="text-2xl font-bold text-slate-800 dark:text-slate-100">{pets.length}</div>
                   <div className="text-xs text-slate-500">Pets cadastrados</div>
                 </div>
               </div>
@@ -93,7 +93,7 @@ export default function DashboardPage() {
                   <Syringe size={20} className="text-green-600" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-slate-800 leading-tight">
+                  <div className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
                     {nextVaccine ? formatDate(nextVaccine.next_date!) : '—'}
                   </div>
                   <div className="text-xs text-slate-500">Próxima vacina</div>
@@ -110,7 +110,7 @@ export default function DashboardPage() {
                   <Calendar size={20} className="text-amber-600" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-slate-800 leading-tight">
+                  <div className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
                     {nextAppoint ? formatDate(nextAppoint.next_date!) : '—'}
                   </div>
                   <div className="text-xs text-slate-500">Próxima consulta</div>
@@ -127,7 +127,7 @@ export default function DashboardPage() {
                   <TrendingUp size={20} className="text-purple-600" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-slate-800">{formatCurrency(totalExpenses)}</div>
+                  <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{formatCurrency(totalExpenses)}</div>
                   <div className="text-xs text-slate-500">Gastos no mês</div>
                 </div>
               </div>
@@ -138,7 +138,7 @@ export default function DashboardPage() {
         {/* Meus Pets */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-bold text-slate-800">Meus Pets</h2>
+            <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">Meus Pets</h2>
             <Link href="/pets/novo">
               <Button size="sm" className="gap-1"><Plus size={14} /> Novo pet</Button>
             </Link>
@@ -170,7 +170,7 @@ export default function DashboardPage() {
                               : speciesEmoji(pet.species)}
                           </div>
                           <div className="min-w-0">
-                            <div className="font-bold text-slate-800 truncate">{pet.name}</div>
+                            <div className="font-bold text-slate-800 dark:text-slate-100 truncate">{pet.name}</div>
                             <div className="text-xs text-slate-500 truncate">{pet.breed || pet.species}</div>
                             {pet.birth_date && (
                               <div className="text-xs text-slate-400">{petAge(pet.birth_date)}</div>
@@ -196,7 +196,7 @@ export default function DashboardPage() {
         {upcoming.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-base font-bold text-slate-800">Próximos eventos</h2>
+              <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">Próximos eventos</h2>
               <Link href="/calendario" className="text-xs text-blue-600 hover:underline flex items-center gap-1">
                 Ver calendário <ChevronRight size={12} />
               </Link>
@@ -208,15 +208,15 @@ export default function DashboardPage() {
                   const urgent   = daysLeft <= 7
                   return (
                     <div key={entry.id} className="flex items-center gap-3 p-4">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${urgent ? 'bg-red-50' : 'bg-blue-50'}`}>
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${urgent ? 'bg-red-50' : 'bg-blue-50 dark:bg-blue-900/30'}`}>
                         {DIARY_TYPE_ICONS[entry.type]}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-slate-800">{entry.title}</div>
+                        <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">{entry.title}</div>
                         <div className="text-xs text-slate-500">{entry.pet_name} · {DIARY_TYPE_LABELS[entry.type]}</div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <div className="text-xs font-semibold text-slate-700">{formatDate(entry.next_date!)}</div>
+                        <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">{formatDate(entry.next_date!)}</div>
                         <Badge variant={urgent ? 'danger' : 'info'} className="text-[10px] mt-0.5">
                           {daysLeft === 0 ? 'Hoje' : daysLeft === 1 ? 'Amanhã' : `${daysLeft}d`}
                         </Badge>
@@ -239,7 +239,7 @@ export default function DashboardPage() {
                   <div className="font-bold text-base">Upgrade para Premium</div>
                   <div className="text-blue-100 text-sm">IA de nutrição, adestramento, relatórios PDF e muito mais</div>
                 </div>
-                <Button variant="outline" size="sm" className="bg-white text-blue-700 border-white hover:bg-blue-50 flex-shrink-0">
+                <Button variant="outline" size="sm" className="bg-white text-blue-700 border-white hover:bg-blue-50 dark:bg-blue-900/30 flex-shrink-0">
                   Ver planos
                 </Button>
               </div>

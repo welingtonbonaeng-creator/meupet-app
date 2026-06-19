@@ -39,7 +39,7 @@ function BreedAutocomplete({
             <button
               key={breed} type="button"
               onMouseDown={() => { onChange(breed); setOpen(false) }}
-              className="w-full text-left px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors first:rounded-t-xl last:rounded-b-xl"
+              className="w-full text-left px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:bg-blue-900/30 dark:hover:bg-blue-900/30 transition-colors first:rounded-t-xl last:rounded-b-xl"
             >
               {breed}
             </button>
@@ -163,15 +163,15 @@ export default function NovoPetPage() {
           {/* Espécie */}
           <Card>
             <CardContent className="p-4">
-              <label className="text-sm font-semibold text-slate-700 block mb-3">Tipo de pet</label>
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 block mb-3">Tipo de pet</label>
               <div className="grid grid-cols-4 gap-2">
                 {SPECIES.map(s => (
                   <button key={s.value} type="button"
                     onClick={() => { setForm(p => ({ ...p, species: s.value })); setUserEditedIdeal(false) }}
                     className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all text-sm font-medium
                       ${form.species === s.value
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-slate-100 bg-slate-50 text-slate-600 hover:border-slate-200'}`}>
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700'
+                        : 'border-slate-100 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-200'}`}>
                     <span className="text-2xl">{s.emoji}</span>
                     <span className="text-[10px]">{s.label}</span>
                   </button>
@@ -183,7 +183,7 @@ export default function NovoPetPage() {
           {/* Dados básicos */}
           <Card>
             <CardContent className="p-4 space-y-3">
-              <h3 className="font-semibold text-slate-700">Dados básicos</h3>
+              <h3 className="font-semibold text-slate-700 dark:text-slate-200">Dados básicos</h3>
               <Input label={`Nome do ${selectedSpecies?.label || 'pet'}`} placeholder="Ex: Rex, Mimi..." value={form.name} onChange={set('name')} required />
               <BreedAutocomplete
                 species={form.species}
@@ -193,18 +193,18 @@ export default function NovoPetPage() {
 
               {/* Toggle data / idade */}
               <div>
-                <label className="text-sm font-semibold text-slate-700 block mb-2">Nascimento</label>
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 block mb-2">Nascimento</label>
                 <div className="flex gap-2 mb-3">
                   <button type="button"
                     onClick={() => setBirthMode('date')}
                     className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border-2 text-xs font-semibold transition-all
-                      ${birthMode === 'date' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}>
+                      ${birthMode === 'date' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}>
                     <CalendarDays size={13} /> Data de nascimento
                   </button>
                   <button type="button"
                     onClick={() => setBirthMode('age')}
                     className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border-2 text-xs font-semibold transition-all
-                      ${birthMode === 'age' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}>
+                      ${birthMode === 'age' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}>
                     <Clock size={13} /> Informar idade
                   </button>
                 </div>
@@ -215,11 +215,11 @@ export default function NovoPetPage() {
                       type="date"
                       value={form.birth_date}
                       onChange={set('birth_date')}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     {ageMonthsCalc !== null && ageMonthsCalc >= 0 && (
                       <p className="text-xs text-slate-500 mt-1.5 pl-1">
-                        Idade: <span className="font-semibold text-slate-700">{formatAge(ageMonthsCalc)}</span>
+                        Idade: <span className="font-semibold text-slate-700 dark:text-slate-200">{formatAge(ageMonthsCalc)}</span>
                       </p>
                     )}
                   </div>
@@ -232,7 +232,7 @@ export default function NovoPetPage() {
                           type="number" min="0" max="30" placeholder="0"
                           value={ageYears}
                           onChange={e => setAgeYears(e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
                       <div>
@@ -241,22 +241,22 @@ export default function NovoPetPage() {
                           type="number" min="0" max="11" placeholder="0"
                           value={ageMths}
                           onChange={e => setAgeMths(e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
                     </div>
 
                     {form.birth_date && (
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+                      <div className="bg-slate-50 dark:bg-slate-700 border border-slate-200 rounded-xl p-3 space-y-2">
                         <p className="text-xs text-slate-500">
-                          Ano estimado: <span className="font-semibold text-slate-700">{form.birth_date.slice(0, 4)}</span>
+                          Ano estimado: <span className="font-semibold text-slate-700 dark:text-slate-200">{form.birth_date.slice(0, 4)}</span>
                           <span className="text-slate-400"> · ajuste a data completa se souber:</span>
                         </p>
                         <input
                           type="date"
                           value={form.birth_date}
                           onChange={set('birth_date')}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
                     )}
@@ -279,13 +279,13 @@ export default function NovoPetPage() {
           {/* Peso */}
           <Card>
             <CardContent className="p-4 space-y-3">
-              <h3 className="font-semibold text-slate-700">Peso</h3>
+              <h3 className="font-semibold text-slate-700 dark:text-slate-200">Peso</h3>
               <div className="grid grid-cols-2 gap-3">
                 <Input label="Peso atual (kg)" type="number" step="0.1" placeholder="Ex: 8.5" value={form.weight_kg} onChange={set('weight_kg')} />
                 <Input label="Peso ideal (kg)" type="number" step="0.1" placeholder="Ex: 8.0" value={form.ideal_weight} onChange={set('ideal_weight')} />
               </div>
               {idealSuggestion && (
-                <div className="flex items-center gap-2 text-xs bg-blue-50 border border-blue-200 rounded-xl px-3 py-2">
+                <div className="flex items-center gap-2 text-xs bg-blue-50 dark:bg-blue-900/30 border border-blue-200 rounded-xl px-3 py-2">
                   <Sparkles size={12} className="text-blue-500 shrink-0" />
                   <span className="text-blue-700">{idealSuggestion.label}</span>
                   {userEditedIdeal && (
@@ -305,12 +305,12 @@ export default function NovoPetPage() {
           {/* Extras */}
           <Card>
             <CardContent className="p-4 space-y-3">
-              <h3 className="font-semibold text-slate-700">Informações extras</h3>
+              <h3 className="font-semibold text-slate-700 dark:text-slate-200">Informações extras</h3>
               <Input label="Microchip (opcional)" placeholder="Número do microchip" value={form.microchip} onChange={set('microchip')} />
               <div>
-                <label className="text-sm font-semibold text-slate-700 block mb-1.5">Observações</label>
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 block mb-1.5">Observações</label>
                 <textarea
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-700 px-4 py-3 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                   rows={3} placeholder="Alergias, comportamento, histórico..." value={form.notes}
                   onChange={set('notes')} />
               </div>

@@ -338,7 +338,7 @@ export default function AdestamentoPage() {
                                     >
                                       {isDone
                                         ? <CheckCircle size={22} className="text-green-500" />
-                                        : <Circle size={22} className="text-slate-300 dark:text-slate-600" />
+                                        : <Circle size={22} className="text-slate-300 dark:text-slate-600 dark:text-slate-300" />
                                       }
                                     </button>
 

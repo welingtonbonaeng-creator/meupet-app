@@ -112,7 +112,7 @@ export default function PersonalidadePage() {
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Sparkles size={18} className="text-violet-500" />
-              <span className="font-semibold text-slate-800">Análise de Personalidade</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-100">Análise de Personalidade</span>
             </div>
             <p className="text-sm text-slate-500">A IA analisa o perfil e histórico do seu pet para revelar sua personalidade única.</p>
             {petsLoading ? <div className="h-10 bg-slate-100 rounded-xl animate-pulse" /> : (
@@ -145,13 +145,13 @@ export default function PersonalidadePage() {
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-4">
                   <Star size={16} className="text-purple-500" />
-                  <span className="font-semibold text-slate-800">Traços de personalidade</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-100">Traços de personalidade</span>
                 </div>
                 <div className="space-y-4">
                   {plan.tracos.map((t, i) => (
                     <div key={i}>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-slate-700">{t.nome}</span>
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{t.nome}</span>
                         <span className="text-xs text-slate-400">{t.nivel}/5</span>
                       </div>
                       <NivelBar nivel={t.nivel} />
@@ -169,7 +169,7 @@ export default function PersonalidadePage() {
                   <div className="text-xs font-bold text-green-600 mb-2">✅ Pontos fortes</div>
                   <ul className="space-y-1">
                     {plan.pontos_fortes.map((p, i) => (
-                      <li key={i} className="text-xs text-slate-600 flex items-start gap-1">
+                      <li key={i} className="text-xs text-slate-600 dark:text-slate-300 flex items-start gap-1">
                         <span className="mt-1 w-1 h-1 rounded-full bg-green-400 shrink-0" />{p}
                       </li>
                     ))}
@@ -181,7 +181,7 @@ export default function PersonalidadePage() {
                   <div className="text-xs font-bold text-amber-600 mb-2">⚡ Desafios</div>
                   <ul className="space-y-1">
                     {plan.desafios.map((d, i) => (
-                      <li key={i} className="text-xs text-slate-600 flex items-start gap-1">
+                      <li key={i} className="text-xs text-slate-600 dark:text-slate-300 flex items-start gap-1">
                         <span className="mt-1 w-1 h-1 rounded-full bg-amber-400 shrink-0" />{d}
                       </li>
                     ))}
@@ -195,17 +195,17 @@ export default function PersonalidadePage() {
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Heart size={16} className="text-pink-500" />
-                  <span className="font-semibold text-slate-800">Como estimular</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-100">Como estimular</span>
                 </div>
-                <p className="text-sm text-slate-600">{plan.como_brincar}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300">{plan.como_brincar}</p>
               </CardContent>
             </Card>
 
             {/* Tutor ideal */}
             <Card>
               <CardContent className="p-4">
-                <div className="font-semibold text-slate-800 mb-2">👤 Tutor ideal</div>
-                <p className="text-sm text-slate-600">{plan.tipo_tutor_ideal}</p>
+                <div className="font-semibold text-slate-800 dark:text-slate-100 mb-2">👤 Tutor ideal</div>
+                <p className="text-sm text-slate-600 dark:text-slate-300">{plan.tipo_tutor_ideal}</p>
               </CardContent>
             </Card>
 

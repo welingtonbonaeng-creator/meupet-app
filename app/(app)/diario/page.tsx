@@ -312,7 +312,7 @@ export default function DiarioPage() {
                     onClick={() => setComposePetId(pet.id)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-sm font-semibold shrink-0 transition-all ${
                       composePetId === pet.id
-                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                         : 'border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400'
                     }`}
                   >

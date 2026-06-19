@@ -178,7 +178,7 @@ export default function PesoPage() {
                         <div key={e.id} className="flex-1 flex flex-col items-center gap-1">
                           <div className="text-[9px] text-slate-500 dark:text-slate-400 leading-none">{e.weight_kg}</div>
                           <div
-                            className={`w-full rounded-t-md transition-all ${isLast ? 'bg-blue-500' : 'bg-blue-200 dark:bg-blue-800'}`}
+                            className={`w-full rounded-t-md transition-all ${isLast ? 'bg-blue-50 dark:bg-blue-900/300' : 'bg-blue-200 dark:bg-blue-800'}`}
                             style={{ height: `${pct}%` }}
                           />
                           <div className="text-[8px] text-slate-400 dark:text-slate-500 leading-none">
@@ -211,7 +211,7 @@ export default function PesoPage() {
             ) : entries.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center">
-                  <Scale size={32} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                  <Scale size={32} className="mx-auto text-slate-300 dark:text-slate-600 dark:text-slate-300 mb-2" />
                   <p className="text-slate-500 dark:text-slate-400 text-sm">Nenhum registro ainda</p>
                   <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">Clique em "Registrar Peso" para começar</p>
                 </CardContent>

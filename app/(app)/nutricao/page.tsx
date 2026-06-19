@@ -82,7 +82,7 @@ export default function NutricaoPage() {
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Sparkles size={18} className="text-purple-500" />
-              <span className="font-semibold text-slate-800">Plano de Nutrição Personalizado</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-100">Plano de Nutrição Personalizado</span>
             </div>
             <p className="text-sm text-slate-500">A IA analisa o perfil do seu pet e cria um plano alimentar completo.</p>
             {petsLoading ? (
@@ -145,7 +145,7 @@ export default function NutricaoPage() {
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <CheckCircle size={16} className="text-green-500" />
-                  <span className="font-semibold text-slate-800">Pode comer</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-100">Pode comer</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {plan.alimentos_recomendados.map((a, i) => (
@@ -160,7 +160,7 @@ export default function NutricaoPage() {
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <XCircle size={16} className="text-red-500" />
-                  <span className="font-semibold text-slate-800">Nunca dar</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-100">Nunca dar</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {plan.alimentos_proibidos.map((a, i) => (
@@ -176,11 +176,11 @@ export default function NutricaoPage() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Zap size={16} className="text-purple-500" />
-                    <span className="font-semibold text-slate-800">Suplementos</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-100">Suplementos</span>
                   </div>
                   <ul className="space-y-1">
                     {plan.suplementos.map((s, i) => (
-                      <li key={i} className="text-sm text-slate-600 flex items-center gap-2">
+                      <li key={i} className="text-sm text-slate-600 dark:text-slate-300 flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
                         {s}
                       </li>
@@ -193,10 +193,10 @@ export default function NutricaoPage() {
             {/* Dicas */}
             <Card>
               <CardContent className="p-4">
-                <div className="font-semibold text-slate-800 mb-3">💡 Dicas do veterinário</div>
+                <div className="font-semibold text-slate-800 dark:text-slate-100 mb-3">💡 Dicas do veterinário</div>
                 <ul className="space-y-2">
                   {plan.dicas.map((d, i) => (
-                    <li key={i} className="text-sm text-slate-600 flex items-start gap-2">
+                    <li key={i} className="text-sm text-slate-600 dark:text-slate-300 flex items-start gap-2">
                       <span className="mt-1 w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
                       {d}
                     </li>

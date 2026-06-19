@@ -106,7 +106,7 @@ export default function SuportePage() {
         ) : tickets.length === 0 && !showForm ? (
           <Card>
             <CardContent className="p-10 text-center">
-              <LifeBuoy size={32} className="text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <LifeBuoy size={32} className="text-slate-300 dark:text-slate-600 dark:text-slate-300 mx-auto mb-3" />
               <p className="text-slate-500 dark:text-slate-400 font-medium">Nenhuma solicitação</p>
               <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Clique em "Nova solicitação" para falar com nosso suporte</p>
             </CardContent>

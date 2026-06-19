@@ -255,7 +255,7 @@ Responda em JSON: {"resumo": "texto do resumo completo", "status": "saudável|at
                             <span className="font-semibold text-slate-800 dark:text-slate-100">{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                           </div>
                           <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                            <div className="h-full bg-blue-50 dark:bg-blue-900/300 rounded-full transition-all" style={{ width: `${pct}%` }} />
                           </div>
                         </div>
                       )

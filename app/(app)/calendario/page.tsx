@@ -71,7 +71,7 @@ export default function CalendarioPage() {
               <button onClick={() => setCursor(new Date(year, month - 1, 1))} className="p-2 rounded-xl hover:bg-slate-100">
                 <ChevronLeft size={18} />
               </button>
-              <span className="font-bold text-slate-800">{MONTHS[month]} {year}</span>
+              <span className="font-bold text-slate-800 dark:text-slate-100">{MONTHS[month]} {year}</span>
               <button onClick={() => setCursor(new Date(year, month + 1, 1))} className="p-2 rounded-xl hover:bg-slate-100">
                 <ChevronRight size={18} />
               </button>
@@ -90,16 +90,16 @@ export default function CalendarioPage() {
                 const evts  = eventsByDay[ds] || []
                 const isSel = selectedDay === ds
                 const todayClass = isToday(day) ? 'ring-2 ring-blue-500' : ''
-                const selClass   = isSel ? 'bg-blue-600 text-white' : 'hover:bg-slate-50'
+                const selClass   = isSel ? 'bg-blue-600 text-white' : 'hover:bg-slate-50 dark:bg-slate-700'
                 return (
                   <button key={i} type="button"
                     onClick={() => setSelectedDay(isSel ? null : ds)}
                     className={`relative flex flex-col items-center py-1.5 rounded-xl transition-all ${selClass} ${todayClass}`}>
-                    <span className={`text-sm font-semibold ${isSel ? 'text-white' : isToday(day) ? 'text-blue-600' : 'text-slate-700'}`}>{day}</span>
+                    <span className={`text-sm font-semibold ${isSel ? 'text-white' : isToday(day) ? 'text-blue-600' : 'text-slate-700 dark:text-slate-200'}`}>{day}</span>
                     {evts.length > 0 && (
                       <div className="flex gap-0.5 mt-0.5">
                         {evts.slice(0,3).map((_,j) => (
-                          <div key={j} className={`w-1 h-1 rounded-full ${isSel ? 'bg-blue-200' : 'bg-blue-500'}`} />
+                          <div key={j} className={`w-1 h-1 rounded-full ${isSel ? 'bg-blue-200' : 'bg-blue-50 dark:bg-blue-900/300'}`} />
                         ))}
                       </div>
                     )}
@@ -113,7 +113,7 @@ export default function CalendarioPage() {
         {/* Selected day events */}
         {selectedDay && (
           <div>
-            <h3 className="text-sm font-bold text-slate-700 mb-2">
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">
               {new Date(selectedDay + 'T12:00:00').toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' })}
             </h3>
             {selectedEvents.length === 0 ? (
@@ -124,11 +124,11 @@ export default function CalendarioPage() {
                   <Card key={e.id}>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-lg flex-shrink-0">
+                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-lg flex-shrink-0">
                           {DIARY_TYPE_ICONS[e.type]}
                         </div>
                         <div className="flex-1">
-                          <div className="font-semibold text-slate-800 text-sm">{e.title}</div>
+                          <div className="font-semibold text-slate-800 dark:text-slate-100 text-sm">{e.title}</div>
                           <div className="text-xs text-slate-500">{e.pet_name} · {DIARY_TYPE_LABELS[e.type]}</div>
                         </div>
                       </div>
@@ -143,7 +143,7 @@ export default function CalendarioPage() {
         {/* Upcoming */}
         {!selectedDay && upcomingAll.length > 0 && (
           <div>
-            <h3 className="text-sm font-bold text-slate-700 mb-2">Próximos eventos</h3>
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">Próximos eventos</h3>
             <div className="space-y-2">
               {upcomingAll.map(e => {
                 const d = Math.ceil((new Date(e.next_date!).getTime() - Date.now()) / 86400000)
@@ -151,11 +151,11 @@ export default function CalendarioPage() {
                   <Card key={e.id}>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-lg flex-shrink-0">
+                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-lg flex-shrink-0">
                           {DIARY_TYPE_ICONS[e.type]}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-slate-800 text-sm">{e.title}</div>
+                          <div className="font-semibold text-slate-800 dark:text-slate-100 text-sm">{e.title}</div>
                           <div className="text-xs text-slate-500">{e.pet_name} · {formatDate(e.next_date!)}</div>
                         </div>
                         <Badge variant={d <= 3 ? 'danger' : d <= 7 ? 'warning' : 'info'} className="text-[10px] flex-shrink-0">
