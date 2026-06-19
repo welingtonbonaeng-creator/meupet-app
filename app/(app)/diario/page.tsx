@@ -463,11 +463,14 @@ export default function DiarioPage() {
   const [mediaType, setMediaType]       = useState<'image' | 'video'>('image')
   const [saving, setSaving]             = useState(false)
   const [uploadErr, setUploadErr]       = useState('')
+  const [hasCamera, setHasCamera]       = useState(false)
   const fileRef   = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? ''))
+    // touch devices (phones/tablets) have cameras; desktops ignore `capture` attr
+    setHasCamera('ontouchstart' in window || navigator.maxTouchPoints > 0)
   }, [])
 
   useEffect(() => {
@@ -716,15 +719,17 @@ export default function DiarioPage() {
 
           {!mediaPreview ? (
             <div className="space-y-2.5">
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => cameraRef.current?.click()}
-                  className="h-24 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-blue-400 hover:text-blue-500 dark:hover:border-blue-500 transition-colors"
-                >
-                  <Camera size={24} />
-                  <span className="text-xs font-semibold">Tirar foto</span>
-                </button>
+              <div className={`grid gap-3 ${hasCamera ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                {hasCamera && (
+                  <button
+                    type="button"
+                    onClick={() => cameraRef.current?.click()}
+                    className="h-24 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-blue-400 hover:text-blue-500 dark:hover:border-blue-500 transition-colors"
+                  >
+                    <Camera size={24} />
+                    <span className="text-xs font-semibold">Tirar foto</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
