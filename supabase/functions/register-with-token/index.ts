@@ -79,6 +79,12 @@ serve(async (req) => {
       used_at: new Date().toISOString(),
     }).eq('id', inviteToken.id).is('used_at', null)
 
+    // 4. Garantir plano Premium para usuários de teste (aguarda trigger criar o perfil)
+    await new Promise(r => setTimeout(r, 500))
+    await adminClient.from('profiles')
+      .update({ plan: 'premium' })
+      .eq('id', authData.user.id)
+
     return new Response(
       JSON.stringify({ success: true }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

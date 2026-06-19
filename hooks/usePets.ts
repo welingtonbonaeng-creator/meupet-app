@@ -21,7 +21,17 @@ export function usePets() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
     const { data, error } = await supabase.from('pets').insert({ ...pet, user_id: user.id }).select().single()
-    if (!error) setPets(p => [...p, data])
+    if (error || !data) return null
+    setPets(p => [...p, data])
+    // Se informou peso no cadastro, registra automaticamente no histórico
+    if (pet.weight_kg) {
+      await supabase.from('pet_weight_history').insert({
+        pet_id:      data.id,
+        weight_kg:   pet.weight_kg,
+        measured_at: new Date().toISOString().split('T')[0],
+        notes:       'Peso inicial no cadastro',
+      })
+    }
     return data
   }
 

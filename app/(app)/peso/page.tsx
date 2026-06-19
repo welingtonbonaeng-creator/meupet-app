@@ -72,6 +72,10 @@ export default function PesoPage() {
   const prev   = entries[entries.length - 2]
   const diff   = latest && prev ? (latest.weight_kg - prev.weight_kg) : null
 
+  // Fallback: usa o peso salvo no cadastro quando ainda não há histórico
+  const fallbackWeight = !latest && selectedPet?.weight_kg ? selectedPet.weight_kg : null
+  const currentWeight  = latest?.weight_kg ?? fallbackWeight ?? null
+
   const petOptions = pets.map(p => ({ value: p.id, label: `${p.name}` }))
   const ageMonths  = calcAgeMonths(selectedPet?.birth_date ?? null)
 
@@ -81,8 +85,8 @@ export default function PesoPage() {
     : null
   const ideal       = storedIdeal ?? calculatedIdeal?.ideal ?? null
   const idealRange  = storedIdeal ? null : calculatedIdeal
-  const status = latest && ideal
-    ? latest.weight_kg > ideal * 1.1 ? 'acima' : latest.weight_kg < ideal * 0.9 ? 'abaixo' : 'ideal'
+  const status = currentWeight && ideal
+    ? currentWeight > ideal * 1.1 ? 'acima' : currentWeight < ideal * 0.9 ? 'abaixo' : 'ideal'
     : null
 
   const statusBadge = {
@@ -113,10 +117,14 @@ export default function PesoPage() {
                     </div>
                     <div>
                       <div className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-                        {latest ? `${latest.weight_kg} kg` : '—'}
+                        {currentWeight ? `${currentWeight} kg` : '—'}
                       </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {latest ? `Medido em ${new Date(latest.measured_at + 'T12:00:00').toLocaleDateString('pt-BR')}` : 'Nenhum registro'}
+                        {latest
+                          ? `Medido em ${new Date(latest.measured_at + 'T12:00:00').toLocaleDateString('pt-BR')}`
+                          : fallbackWeight
+                          ? 'Peso informado no cadastro'
+                          : 'Nenhum registro'}
                       </div>
                     </div>
                   </div>
