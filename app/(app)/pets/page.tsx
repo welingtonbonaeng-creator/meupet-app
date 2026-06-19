@@ -123,11 +123,15 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-slate-50">
+            <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-50">
               <div className="text-center">
-                <div className="text-lg font-bold text-slate-800">{pet.weight_kg ? `${pet.weight_kg}kg` : '—'}</div>
+                <div className="text-lg font-bold text-slate-800">{pet.weight_kg ? `${pet.weight_kg} kg` : '—'}</div>
                 <div className="text-xs text-slate-500">Peso atual</div>
                 {ws && <div className={`text-xs font-medium mt-0.5 ${ws.color}`}>{ws.icon} {ws.label}</div>}
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-slate-800">{pet.ideal_weight ? `${pet.ideal_weight} kg` : '—'}</div>
+                <div className="text-xs text-slate-500">Peso ideal</div>
               </div>
               <div className="text-center">
                 <div className="text-lg font-bold text-slate-800">{pet.birth_date ? petAge(pet.birth_date) : '—'}</div>
@@ -338,13 +342,15 @@ export default function PetsPage() {
                             <span className="font-bold text-slate-800 text-base">{pet.name}</span>
                             {pet.sex && <Badge variant="info" className="text-xs">{pet.sex === 'male' ? '♂ Macho' : '♀ Fêmea'}</Badge>}
                           </div>
-                          <div className="text-sm text-slate-500 mt-0.5">{pet.breed || pet.species}{pet.birth_date ? ` · ${petAge(pet.birth_date)}` : ''}</div>
-                          {pet.weight_kg && (
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-xs text-slate-400">{pet.weight_kg} kg</span>
-                              {ws && <span className={`text-xs font-medium ${ws.color}`}>{ws.icon} {ws.label}</span>}
-                            </div>
-                          )}
+                          <div className="text-sm text-slate-500 mt-0.5">
+                            {pet.breed || pet.species}
+                            {pet.birth_date ? ` · ${petAge(pet.birth_date)}` : ''}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            {pet.weight_kg && <span className="text-xs text-slate-400">{pet.weight_kg} kg</span>}
+                            {pet.ideal_weight && <span className="text-xs text-slate-400">· ideal {pet.ideal_weight} kg</span>}
+                            {ws && <span className={`text-xs font-medium ${ws.color}`}>{ws.icon} {ws.label}</span>}
+                          </div>
                         </div>
                         <ChevronRight size={18} className="text-slate-300 flex-shrink-0" />
                       </div>
