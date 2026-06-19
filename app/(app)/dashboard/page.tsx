@@ -65,10 +65,10 @@ export default function DashboardPage() {
   const nextDeworming = upcoming.find(e => e.type === 'deworming')
 
   return (
-    <div>
+    <div className="flex flex-col h-full">
       <TopBar title={`${greeting}, ${firstName}! 👋`} subtitle="Aqui está o resumo dos seus pets" userName={profile?.name} />
 
-      <div className="p-4 lg:p-6 space-y-6 max-w-5xl">
+      <div className="flex-1 overflow-auto p-4 lg:p-6 space-y-6 max-w-5xl pb-24">
 
         {/* Stats rápidos */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -160,7 +160,7 @@ export default function DashboardPage() {
               {pets.map(pet => {
                 const ws = pet.weight_kg && pet.ideal_weight ? weightStatus(pet.weight_kg, pet.ideal_weight) : null
                 return (
-                  <Link key={pet.id} href={`/pets/${pet.id}`}>
+                  <Link key={pet.id} href={`/pets?id=${pet.id}`}>
                     <Card className="hover:shadow-md transition-shadow cursor-pointer">
                       <CardContent className="p-4">
                         <div className="flex items-center gap-3 mb-3">
