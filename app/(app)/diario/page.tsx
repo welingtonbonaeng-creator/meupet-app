@@ -250,7 +250,7 @@ function PostCard({
         {/* Imagem com double-tap to like / single-tap to lightbox */}
         {post.media_url && post.media_type === 'image' && (
           <div
-            className="aspect-square bg-slate-100 dark:bg-slate-700 overflow-hidden relative cursor-pointer select-none"
+            className="aspect-[4/3] bg-slate-100 dark:bg-slate-700 overflow-hidden relative cursor-pointer select-none"
             onClick={handleImageTap}
           >
             <img
@@ -277,7 +277,7 @@ function PostCard({
 
         {/* Nota sem mídia — cartão gradiente */}
         {!post.media_url && post.caption && (
-          <div className={`bg-gradient-to-br ${grad} px-6 py-10 min-h-[160px] flex items-center justify-center`}>
+          <div className={`bg-gradient-to-br ${grad} px-6 py-8 min-h-[110px] flex items-center justify-center`}>
             <p className={`${textColor} text-lg font-semibold text-center leading-relaxed drop-shadow-sm`}>
               &ldquo;{post.caption}&rdquo;
             </p>
@@ -431,7 +431,8 @@ export default function DiarioPage() {
   const [mediaType, setMediaType]       = useState<'image' | 'video'>('image')
   const [saving, setSaving]             = useState(false)
   const [uploadErr, setUploadErr]       = useState('')
-  const fileRef = useRef<HTMLInputElement>(null)
+  const fileRef   = useRef<HTMLInputElement>(null)
+  const cameraRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? ''))
@@ -528,7 +529,8 @@ export default function DiarioPage() {
     setMediaFile(null)
     if (mediaPreview) URL.revokeObjectURL(mediaPreview)
     setMediaPreview(null)
-    if (fileRef.current) fileRef.current.value = ''
+    if (fileRef.current)   fileRef.current.value = ''
+    if (cameraRef.current) cameraRef.current.value = ''
   }
 
   function closeCompose() {
@@ -581,7 +583,8 @@ export default function DiarioPage() {
       <TopBar title="Diário" />
 
       {/* Stories */}
-      <div className="flex gap-4 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-slate-100 dark:border-slate-700/50 shrink-0">
+      <div className="border-b border-slate-100 dark:border-slate-700/50 shrink-0">
+      <div className="w-full max-w-[500px] mx-auto flex gap-4 px-4 py-3 overflow-x-auto scrollbar-hide">
         <button onClick={() => setSelectedPetId('')} className="flex flex-col items-center gap-1.5 shrink-0">
           <div className={`p-[2px] rounded-full transition-all ${!selectedPetId ? 'bg-gradient-to-br from-blue-500 to-purple-500' : 'bg-slate-200 dark:bg-slate-700'}`}>
             <div className="w-14 h-14 rounded-full bg-white dark:bg-slate-900 border-2 border-white dark:border-slate-900 flex items-center justify-center text-2xl">
@@ -601,9 +604,11 @@ export default function DiarioPage() {
           />
         ))}
       </div>
+      </div>
 
       {/* Feed */}
       <div className="flex-1 overflow-auto pb-28">
+        <div className="w-full max-w-[500px] mx-auto">
         {loading ? (
           <div className="space-y-4 p-4">
             {[1, 2].map(i => (
@@ -612,7 +617,7 @@ export default function DiarioPage() {
                   <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700" />
                   <div className="h-3 w-28 bg-slate-200 dark:bg-slate-700 rounded-full" />
                 </div>
-                <div className="aspect-square bg-slate-100 dark:bg-slate-700" />
+                <div className="aspect-[4/3] bg-slate-100 dark:bg-slate-700" />
                 <div className="p-4 h-10" />
               </div>
             ))}
@@ -641,12 +646,13 @@ export default function DiarioPage() {
             ))}
           </div>
         )}
+        </div>
       </div>
 
-      {/* FAB câmera */}
+      {/* FAB câmera — alinhado ao feed em telas maiores */}
       <button
         onClick={() => setShowCompose(true)}
-        className="fixed bottom-20 right-4 z-30 w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/40 flex items-center justify-center active:scale-95 transition-all"
+        className="fixed bottom-20 right-4 sm:right-[calc(50%-234px)] z-30 w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/40 flex items-center justify-center active:scale-95 transition-all"
       >
         <Camera size={22} />
       </button>
@@ -677,15 +683,27 @@ export default function DiarioPage() {
           )}
 
           {!mediaPreview ? (
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="w-full h-44 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 flex flex-col items-center justify-center gap-2.5 text-slate-400 hover:border-blue-400 hover:text-blue-500 dark:hover:border-blue-500 transition-colors"
-            >
-              <ImagePlus size={30} />
-              <span className="text-sm font-semibold">Adicionar foto ou vídeo</span>
-              <span className="text-xs text-slate-400">JPG, PNG, MP4 · máx 50 MB</span>
-            </button>
+            <div className="space-y-2.5">
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => cameraRef.current?.click()}
+                  className="h-24 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-blue-400 hover:text-blue-500 dark:hover:border-blue-500 transition-colors"
+                >
+                  <Camera size={24} />
+                  <span className="text-xs font-semibold">Tirar foto</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="h-24 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-blue-400 hover:text-blue-500 dark:hover:border-blue-500 transition-colors"
+                >
+                  <ImagePlus size={24} />
+                  <span className="text-xs font-semibold">Da galeria</span>
+                </button>
+              </div>
+              <p className="text-[10px] text-center text-slate-400">JPG, PNG, MP4 · máx 50 MB</p>
+            </div>
           ) : (
             <div className="relative rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-700">
               {mediaType === 'video'
@@ -704,6 +722,13 @@ export default function DiarioPage() {
           <input
             ref={fileRef} type="file"
             accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
+            className="hidden"
+            onChange={handleFileSelect}
+          />
+          <input
+            ref={cameraRef} type="file"
+            accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime"
+            capture="environment"
             className="hidden"
             onChange={handleFileSelect}
           />
