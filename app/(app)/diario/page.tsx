@@ -6,7 +6,7 @@ import { TopBar } from '@/components/layout/TopBar'
 import { Modal } from '@/components/ui/modal'
 import {
   Camera, ImagePlus, X,
-  Heart, MessageCircle, MoreHorizontal, Trash2, Send,
+  Heart, MessageCircle, MoreHorizontal, Trash2, Send, Download,
 } from 'lucide-react'
 import type { Pet } from '@/types'
 
@@ -157,6 +157,24 @@ function PostCard({
     setSendingComment(false)
   }
 
+  async function downloadMedia() {
+    if (!post.media_url) return
+    setShowMenu(false)
+    try {
+      const res  = await fetch(post.media_url)
+      const blob = await res.blob()
+      const url  = URL.createObjectURL(blob)
+      const ext  = blob.type.split('/')[1]?.split(';')[0] || (post.media_type === 'video' ? 'mp4' : 'jpg')
+      const a    = document.createElement('a')
+      a.href     = url
+      a.download = `${post.pet.name}_${new Date(post.created_at).toISOString().slice(0, 10)}.${ext}`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      window.open(post.media_url, '_blank')
+    }
+  }
+
   async function deletePost() {
     setDeleting(true)
     if (post.media_url) {
@@ -215,13 +233,27 @@ function PostCard({
             {showMenu && (
               <div className="absolute right-0 top-9 z-20 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 overflow-hidden min-w-[168px]">
                 {!confirmingDelete ? (
-                  <button
-                    onClick={() => setConfirmingDelete(true)}
-                    className="flex items-center gap-2.5 w-full px-4 py-3 text-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                  >
-                    <Trash2 size={14} />
-                    Deletar post
-                  </button>
+                  <>
+                    {post.media_url && (
+                      <button
+                        onClick={downloadMedia}
+                        className="flex items-center gap-2.5 w-full px-4 py-3 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors"
+                      >
+                        <Download size={14} />
+                        Baixar mídia
+                      </button>
+                    )}
+                    {post.media_url && (
+                      <div className="h-px bg-slate-100 dark:bg-slate-700 mx-3" />
+                    )}
+                    <button
+                      onClick={() => setConfirmingDelete(true)}
+                      className="flex items-center gap-2.5 w-full px-4 py-3 text-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                      Deletar post
+                    </button>
+                  </>
                 ) : (
                   <div className="px-4 py-3 space-y-2.5">
                     <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Tem certeza?</p>
