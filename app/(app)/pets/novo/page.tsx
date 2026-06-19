@@ -8,8 +8,47 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import type { PetSpecies, PetSex } from '@/types'
-import { getIdealWeight } from '@/lib/idealWeight'
+import { getIdealWeight, DOG_BREED_NAMES, CAT_BREED_NAMES } from '@/lib/idealWeight'
 import { Sparkles, CalendarDays, Clock } from 'lucide-react'
+
+function BreedAutocomplete({
+  species, value, onChange,
+}: { species: string; value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const list = species === 'dog' ? DOG_BREED_NAMES : species === 'cat' ? CAT_BREED_NAMES : []
+  const filtered = value.length >= 1
+    ? list.filter(b => b.toLowerCase().includes(value.toLowerCase()))
+    : list.slice(0, 10)
+
+  return (
+    <div className="relative">
+      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 block mb-1.5">
+        Raça {list.length > 0 ? '(opcional)' : '(opcional)'}
+      </label>
+      <input
+        value={value}
+        onChange={e => { onChange(e.target.value); setOpen(true) }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        placeholder={species === 'dog' ? 'Ex: Labrador, Poodle, Shih Tzu...' : species === 'cat' ? 'Ex: Siamês, Persa, SRD...' : 'Ex: Anão, Holland Lop...'}
+        className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      {open && list.length > 0 && filtered.length > 0 && (
+        <div className="absolute z-20 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg max-h-52 overflow-y-auto">
+          {filtered.map(breed => (
+            <button
+              key={breed} type="button"
+              onMouseDown={() => { onChange(breed); setOpen(false) }}
+              className="w-full text-left px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors first:rounded-t-xl last:rounded-b-xl"
+            >
+              {breed}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 const SPECIES: { value: PetSpecies; label: string; emoji: string }[] = [
   { value: 'dog',    label: 'Cachorro', emoji: '🐶' },
@@ -146,11 +185,10 @@ export default function NovoPetPage() {
             <CardContent className="p-4 space-y-3">
               <h3 className="font-semibold text-slate-700">Dados básicos</h3>
               <Input label={`Nome do ${selectedSpecies?.label || 'pet'}`} placeholder="Ex: Rex, Mimi..." value={form.name} onChange={set('name')} required />
-              <Input
-                label="Raça (opcional)"
-                placeholder={`Ex: ${form.species === 'dog' ? 'Labrador, Poodle, Shih Tzu...' : 'Siamês, Persa...'}`}
+              <BreedAutocomplete
+                species={form.species}
                 value={form.breed}
-                onChange={e => { set('breed')(e); setUserEditedIdeal(false) }}
+                onChange={v => { setForm(p => ({ ...p, breed: v })); setUserEditedIdeal(false) }}
               />
 
               {/* Toggle data / idade */}
