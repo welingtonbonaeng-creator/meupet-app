@@ -13,7 +13,7 @@ import type { Profile, DiaryEntry } from '@/types'
 import { DIARY_TYPE_LABELS, DIARY_TYPE_ICONS } from '@/types'
 import {
   Heart, Calendar, Syringe, Scale, Plus, ChevronRight,
-  AlertCircle, TrendingUp, Star
+  AlertCircle, TrendingUp, Star, Bell, X
 } from 'lucide-react'
 
 export default function DashboardPage() {
@@ -23,6 +23,8 @@ export default function DashboardPage() {
   const [profile, setProfile]     = useState<Profile | null>(null)
   const [upcoming, setUpcoming]   = useState<(DiaryEntry & { pet_name: string })[]>([])
   const [totalExpenses, setTotal] = useState(0)
+  const [notifPermission, setNotifPermission] = useState<string | null>(null)
+  const [dismissed, setDismissed] = useState<Record<string,boolean>>({})
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -30,6 +32,7 @@ export default function DashboardPage() {
       supabase.from('profiles').select('*').eq('id', user.id).single()
         .then(({ data }) => { if (data) setProfile(data) })
     })
+    if ('Notification' in window) setNotifPermission(Notification.permission)
   }, [])
 
   useEffect(() => {
@@ -37,38 +40,153 @@ export default function DashboardPage() {
     const petIds = pets.map(p => p.id)
     const today  = new Date().toISOString().slice(0, 10)
 
-    // Próximos eventos (vacinas, consultas, etc.)
     supabase.from('pet_diary').select('*').in('pet_id', petIds)
       .not('next_date', 'is', null).gte('next_date', today)
-      .order('next_date').limit(5)
+      .order('next_date').limit(10)
       .then(({ data }) => {
         const entries = (data || []).map(e => ({
-          ...e,
-          pet_name: pets.find(p => p.id === e.pet_id)?.name || ''
+          ...e, pet_name: pets.find(p => p.id === e.pet_id)?.name || ''
         }))
         setUpcoming(entries)
       })
 
-    // Total de gastos no mês
     const firstOfMonth = new Date(); firstOfMonth.setDate(1)
     supabase.from('pet_expenses').select('amount_brl').in('pet_id', petIds)
       .gte('expense_date', firstOfMonth.toISOString().slice(0, 10))
       .then(({ data }) => setTotal((data || []).reduce((s, e) => s + e.amount_brl, 0)))
   }, [pets])
 
+  // Browser notifications na primeira abertura do dia
+  useEffect(() => {
+    if (!upcoming.length) return
+    if (typeof window === 'undefined' || !('Notification' in window)) return
+    if (Notification.permission !== 'granted') return
+
+    const todayStr  = new Date().toISOString().slice(0, 10)
+    const key       = `meupet_notified_${todayStr}`
+    if (localStorage.getItem(key)) return
+
+    const todayEvts = upcoming.filter(e => e.next_date?.slice(0,10) === todayStr)
+    todayEvts.forEach(e => {
+      try {
+        new Notification(`🐾 ${e.pet_name} — ${e.title}`, {
+          body: `${DIARY_TYPE_LABELS[e.type]} agendado para hoje!`,
+          icon: '/meupet-app/icons/icon-192.png',
+        })
+      } catch {}
+    })
+    if (todayEvts.length) localStorage.setItem(key, '1')
+  }, [upcoming])
+
+  async function requestNotifPermission() {
+    if (!('Notification' in window)) return
+    const perm = await Notification.requestPermission()
+    setNotifPermission(perm)
+    if (perm === 'granted') {
+      const todayStr = new Date().toISOString().slice(0, 10)
+      const todayEvts = upcoming.filter(e => e.next_date?.slice(0,10) === todayStr)
+      todayEvts.forEach(e => {
+        try {
+          new Notification(`🐾 ${e.pet_name} — ${e.title}`, {
+            body: `${DIARY_TYPE_LABELS[e.type]} agendado para hoje!`,
+          })
+        } catch {}
+      })
+    }
+  }
+
+  const todayStr    = new Date().toISOString().slice(0, 10)
+  const tomorrowStr = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
+  const todayEvents    = upcoming.filter(e => e.next_date?.slice(0,10) === todayStr)
+  const tomorrowEvents = upcoming.filter(e => e.next_date?.slice(0,10) === tomorrowStr)
+  const upcomingRest   = upcoming.filter(e => {
+    const d = e.next_date?.slice(0,10)
+    return d && d > tomorrowStr
+  })
+
   const firstName = profile?.name?.split(' ')[0] || 'Tutor'
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
 
-  const nextVaccine  = upcoming.find(e => e.type === 'vaccine')
-  const nextAppoint  = upcoming.find(e => e.type === 'appointment')
-  const nextDeworming = upcoming.find(e => e.type === 'deworming')
+  const nextVaccine   = upcoming.find(e => e.type === 'vaccine')
+  const nextAppoint   = upcoming.find(e => e.type === 'appointment')
 
   return (
     <div className="flex flex-col h-full">
       <TopBar title={`${greeting}, ${firstName}! 👋`} subtitle="Aqui está o resumo dos seus pets" userName={profile?.name} />
 
-      <div className="flex-1 overflow-auto p-4 lg:p-6 space-y-6 max-w-5xl pb-24">
+      <div className="flex-1 overflow-auto p-4 lg:p-6 space-y-4 max-w-5xl pb-24">
+
+        {/* Banner ativar notificações */}
+        {notifPermission === 'default' && (
+          <div className="rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Bell size={16} className="text-blue-500 flex-shrink-0" />
+                <span className="text-sm text-blue-700 dark:text-blue-300">
+                  Ative as notificações para ser lembrado dos eventos
+                </span>
+              </div>
+              <Button size="sm" onClick={requestNotifPermission} className="flex-shrink-0">Ativar</Button>
+            </div>
+          </div>
+        )}
+
+        {/* Alerta — eventos HOJE */}
+        {todayEvents.length > 0 && !dismissed['today'] && (
+          <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <Bell size={16} className="text-red-500 flex-shrink-0 animate-pulse" />
+                <span className="font-bold text-red-700 dark:text-red-400 text-sm">Hoje</span>
+              </div>
+              <button onClick={() => setDismissed(d => ({ ...d, today: true }))}
+                className="text-red-300 hover:text-red-500 transition-colors">
+                <X size={14} />
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              {todayEvents.map(e => (
+                <div key={e.id} className="flex items-center gap-2 text-sm">
+                  <span className="text-base">{DIARY_TYPE_ICONS[e.type]}</span>
+                  <span className="font-semibold text-red-700 dark:text-red-300">{e.title}</span>
+                  <span className="text-red-400 text-xs">· {e.pet_name}</span>
+                </div>
+              ))}
+            </div>
+            <Link href="/calendario" className="mt-3 flex items-center gap-1 text-xs text-red-500 hover:underline">
+              Ver no calendário <ChevronRight size={12} />
+            </Link>
+          </div>
+        )}
+
+        {/* Alerta — eventos AMANHÃ */}
+        {tomorrowEvents.length > 0 && !dismissed['tomorrow'] && (
+          <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-4">
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <Bell size={16} className="text-amber-500 flex-shrink-0" />
+                <span className="font-bold text-amber-700 dark:text-amber-400 text-sm">Amanhã</span>
+              </div>
+              <button onClick={() => setDismissed(d => ({ ...d, tomorrow: true }))}
+                className="text-amber-300 hover:text-amber-500 transition-colors">
+                <X size={14} />
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              {tomorrowEvents.map(e => (
+                <div key={e.id} className="flex items-center gap-2 text-sm">
+                  <span className="text-base">{DIARY_TYPE_ICONS[e.type]}</span>
+                  <span className="font-semibold text-amber-700 dark:text-amber-300">{e.title}</span>
+                  <span className="text-amber-400 text-xs">· {e.pet_name}</span>
+                </div>
+              ))}
+            </div>
+            <Link href="/calendario" className="mt-3 flex items-center gap-1 text-xs text-amber-500 hover:underline">
+              Ver no calendário <ChevronRight size={12} />
+            </Link>
+          </div>
+        )}
 
         {/* Stats rápidos */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -192,8 +310,8 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Próximos eventos */}
-        {upcoming.length > 0 && (
+        {/* Próximos eventos (exceto hoje e amanhã já mostrados nos banners) */}
+        {(upcomingRest.length > 0 || todayEvents.length > 0 || tomorrowEvents.length > 0) && upcoming.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">Próximos eventos</h2>
@@ -202,13 +320,14 @@ export default function DashboardPage() {
               </Link>
             </div>
             <Card>
-              <CardContent className="p-0 divide-y divide-slate-50">
-                {upcoming.map(entry => {
-                  const daysLeft = Math.ceil((new Date(entry.next_date!).getTime() - Date.now()) / 86400000)
-                  const urgent   = daysLeft <= 7
+              <CardContent className="p-0 divide-y divide-slate-50 dark:divide-slate-700/50">
+                {upcoming.slice(0, 5).map(entry => {
+                  const ds       = entry.next_date?.slice(0,10) || ''
+                  const daysLeft = Math.ceil((new Date(ds + 'T12:00:00').getTime() - new Date(todayStr + 'T12:00:00').getTime()) / 86400000)
+                  const isUrgent = daysLeft <= 1
                   return (
                     <div key={entry.id} className="flex items-center gap-3 p-4">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${urgent ? 'bg-red-50' : 'bg-blue-50 dark:bg-blue-900/30'}`}>
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${isUrgent ? 'bg-red-50 dark:bg-red-900/20' : 'bg-blue-50 dark:bg-blue-900/30'}`}>
                         {DIARY_TYPE_ICONS[entry.type]}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -217,7 +336,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="text-right flex-shrink-0">
                         <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">{formatDate(entry.next_date!)}</div>
-                        <Badge variant={urgent ? 'danger' : 'info'} className="text-[10px] mt-0.5">
+                        <Badge variant={daysLeft === 0 ? 'danger' : daysLeft === 1 ? 'warning' : 'info'} className="text-[10px] mt-0.5">
                           {daysLeft === 0 ? 'Hoje' : daysLeft === 1 ? 'Amanhã' : `${daysLeft}d`}
                         </Badge>
                       </div>
