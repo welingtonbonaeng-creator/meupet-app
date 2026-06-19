@@ -18,8 +18,8 @@ export function PetPhotoUpload({ petId, userId, currentUrl, petName, size = 'lg'
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null)
 
-  const dim = size === 'lg' ? 'w-20 h-20' : 'w-14 h-14'
-  const iconSize = size === 'lg' ? 20 : 16
+  const dim = size === 'lg' ? 'w-28 h-28' : 'w-14 h-14'
+  const iconSize = size === 'lg' ? 24 : 16
   const initial = petName[0]?.toUpperCase() ?? '?'
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -62,17 +62,17 @@ export function PetPhotoUpload({ petId, userId, currentUrl, petName, size = 'lg'
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
-        className={`${dim} rounded-2xl overflow-hidden bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 flex items-center justify-center relative group focus:outline-none`}
+        className={`${dim} rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 flex items-center justify-center relative group focus:outline-none ring-4 ring-white dark:ring-slate-900 shadow-lg`}
         title="Clique para trocar a foto"
       >
         {preview ? (
           <img src={preview} alt={petName} className="w-full h-full object-cover" />
         ) : (
-          <span className={`font-bold text-blue-400 dark:text-blue-500 ${size === 'lg' ? 'text-2xl' : 'text-xl'}`}>{initial}</span>
+          <span className={`font-bold text-blue-400 dark:text-blue-500 ${size === 'lg' ? 'text-3xl' : 'text-xl'}`}>{initial}</span>
         )}
 
         {/* Overlay ao hover */}
-        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
           {uploading
             ? <Loader2 size={iconSize} className="text-white animate-spin" />
             : <Camera size={iconSize} className="text-white" />

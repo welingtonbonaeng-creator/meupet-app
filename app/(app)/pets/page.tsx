@@ -216,7 +216,7 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
         </div>
 
         {/* ── Nome + badges + editar ── */}
-        <div className="pt-16 pb-4 text-center px-4">
+        <div className="pt-20 pb-4 text-center px-4">
           <div className="flex items-center justify-center gap-2 mb-1">
             <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{pet.name}</h2>
             <button
@@ -625,7 +625,7 @@ export default function PetsPage() {
                     {/* Barra de cor no topo do card */}
                     <div className={`h-1.5 bg-gradient-to-r ${grad}`} />
                     <div className="p-4 flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center text-3xl flex-shrink-0">
+                      <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center text-3xl flex-shrink-0 ring-2 ring-slate-200 dark:ring-slate-600">
                         {pet.photo_url
                           ? <img src={pet.photo_url} alt={pet.name} className="w-full h-full object-cover" />
                           : speciesEmoji(pet.species)
