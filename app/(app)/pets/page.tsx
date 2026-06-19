@@ -84,14 +84,14 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
   }
 
   return (
-    <div>
+    <div className="flex flex-col h-full">
       <TopBar
         title={pet.name}
         subtitle={`${pet.breed || pet.species}${pet.birth_date ? ' · ' + petAge(pet.birth_date) : ''}`}
         leftAction={<button onClick={onBack} className="p-2 rounded-xl hover:bg-slate-100"><ArrowLeft size={20} /></button>}
       />
 
-      <div className="p-4 lg:p-6 max-w-2xl space-y-4">
+      <div className="flex-1 overflow-auto p-4 lg:p-6 max-w-2xl space-y-4 pb-24">
         <Card>
           <CardContent className="p-5">
             <div className="flex items-center gap-4">
@@ -219,7 +219,7 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
       </div>
 
       <Modal open={modalDiary} onClose={() => setModalDiary(false)} title="Novo registro">
-        <div className="space-y-3">
+        <div className="p-5 space-y-3">
           <Select label="Tipo" value={diaryForm.type} onChange={e => setDiaryForm(p => ({ ...p, type: e.target.value as DiaryType }))}
             options={DIARY_TYPES.map(t => ({ value: t, label: `${DIARY_TYPE_ICONS[t]} ${DIARY_TYPE_LABELS[t]}` }))} />
           <Input label="Título *" placeholder="Ex: Vacina V10 aplicada" value={diaryForm.title}
@@ -249,7 +249,7 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
       </Modal>
 
       <Modal open={modalWeight} onClose={() => setModalWeight(false)} title="Registrar peso">
-        <div className="space-y-3">
+        <div className="p-5 space-y-3">
           <Input label="Peso (kg) *" type="number" step="0.1" value={weightForm.weight_kg}
             onChange={e => setWeightForm(p => ({ ...p, weight_kg: e.target.value }))} />
           <Input label="Data" type="date" value={weightForm.measured_at}
@@ -264,7 +264,7 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
       </Modal>
 
       <Modal open={modalDelete} onClose={() => setModalDelete(false)} title="Excluir pet">
-        <div className="text-center">
+        <div className="p-5 text-center">
           <AlertTriangle size={48} className="text-red-500 mx-auto mb-3" />
           <p className="text-slate-700 mb-1">Tem certeza que quer excluir <strong>{pet.name}</strong>?</p>
           <p className="text-sm text-slate-500 mb-5">Esta ação não pode ser desfeita.</p>
@@ -299,10 +299,10 @@ export default function PetsPage() {
   }
 
   return (
-    <div>
+    <div className="flex flex-col h-full">
       <TopBar title="Meus Pets" subtitle={`${pets.length} pet${pets.length !== 1 ? 's' : ''} cadastrado${pets.length !== 1 ? 's' : ''}`} />
 
-      <div className="p-4 lg:p-6 max-w-2xl">
+      <div className="flex-1 overflow-auto p-4 lg:p-6 max-w-2xl pb-24">
         <div className="flex justify-end mb-4">
           <Link href="/meupet-app/pets/novo/">
             <Button className="gap-2"><Plus size={16} /> Novo pet</Button>
