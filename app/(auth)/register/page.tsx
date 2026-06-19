@@ -8,6 +8,7 @@ import { User, Mail, Lock, Phone, Key, Send, CheckCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 const SUPABASE_URL = 'https://wwoasqjidsrplkpwjsro.supabase.co'
+const ANON_KEY     = 'sb_publishable_1ArtUvOrkSjOgXlDZln2EQ_5gOlLLfo'
 
 type View = 'choose' | 'register' | 'request' | 'request_sent'
 
@@ -38,7 +39,11 @@ export default function RegisterPage() {
 
     const res = await fetch(`${SUPABASE_URL}/functions/v1/register-with-token`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${ANON_KEY}`,
+        'apikey': ANON_KEY,
+      },
       body: JSON.stringify({
         token: form.token.trim(),
         name: form.name.trim(),
