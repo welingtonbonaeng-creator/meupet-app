@@ -80,12 +80,6 @@ export function PetPhotoUpload({ petId, userId, currentUrl, petName, size = 'lg'
         </div>
       </button>
 
-      {/* Badge câmera no canto */}
-      {!uploading && (
-        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center shadow-md pointer-events-none">
-          <Camera size={12} className="text-white" />
-        </div>
-      )}
 
       <input
         ref={inputRef}
