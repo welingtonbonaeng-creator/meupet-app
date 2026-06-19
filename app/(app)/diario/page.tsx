@@ -649,10 +649,10 @@ export default function DiarioPage() {
         </div>
       </div>
 
-      {/* FAB câmera — alinhado ao feed em telas maiores */}
+      {/* FAB câmera */}
       <button
         onClick={() => setShowCompose(true)}
-        className="fixed bottom-20 right-4 sm:right-[calc(50%-234px)] z-30 w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/40 flex items-center justify-center active:scale-95 transition-all"
+        className="fixed bottom-20 right-4 z-30 w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/40 flex items-center justify-center active:scale-95 transition-all"
       >
         <Camera size={22} />
       </button>
