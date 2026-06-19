@@ -308,7 +308,7 @@ export default function PetsPage() {
 
       <div className="flex-1 overflow-auto p-4 lg:p-6 max-w-2xl pb-24">
         <div className="flex justify-end mb-4">
-          <Link href="/meupet-app/pets/novo/">
+          <Link href="/pets/novo">
             <Button className="gap-2"><Plus size={16} /> Novo pet</Button>
           </Link>
         </div>
@@ -320,7 +320,7 @@ export default function PetsPage() {
             <div className="text-5xl mb-4">🐾</div>
             <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-2">Nenhum pet ainda</h3>
             <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Cadastre seu primeiro pet para acompanhar a saúde dele</p>
-            <Link href="/meupet-app/pets/novo/"><Button size="lg">Cadastrar primeiro pet</Button></Link>
+            <Link href="/pets/novo"><Button size="lg">Cadastrar primeiro pet</Button></Link>
           </CardContent></Card>
         ) : (
           <div className="space-y-3">
