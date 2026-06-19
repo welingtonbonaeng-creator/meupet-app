@@ -105,7 +105,7 @@ export default function NovoPetPage() {
       notes:        form.notes || undefined,
     })
     setLoading(false)
-    if (pet) router.push(`/pets/${pet.id}`)
+    if (pet) router.push(`/pets?id=${pet.id}`)
     else setError('Erro ao salvar. Tente novamente.')
   }
 
