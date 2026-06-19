@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { gestao } from '@/lib/gestao'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -64,56 +64,52 @@ function TokenModal({ token, onClose }: { token: string; onClose: () => void }) 
 }
 
 export default function TokensPage() {
-  const supabase = createClient()
-  const [tokens, setTokens] = useState<InviteToken[]>([])
+  const [tokens, setTokens]     = useState<InviteToken[]>([])
   const [requests, setRequests] = useState<TokenRequest[]>([])
-  const [loading, setLoading] = useState(true)
-  const [notes, setNotes] = useState('')
+  const [loading, setLoading]   = useState(true)
+  const [notes, setNotes]       = useState('')
   const [generating, setGenerating] = useState<string | false>(false)
-  const [modal, setModal] = useState<string | null>(null)
-  const [userId, setUserId] = useState<string | null>(null)
+  const [modal, setModal]       = useState<string | null>(null)
 
   async function load() {
     setLoading(true)
-    const [{ data: t }, { data: r }] = await Promise.all([
-      supabase.from('invite_tokens').select('*').order('created_at', { ascending: false }),
-      supabase.from('token_requests').select('*').order('created_at', { ascending: false }),
-    ])
-    setTokens((t as InviteToken[]) ?? [])
-    setRequests((r as TokenRequest[]) ?? [])
+    try {
+      const data = await gestao('get_tokens')
+      setTokens(data.tokens ?? [])
+      setRequests(data.requests ?? [])
+    } catch (e) {
+      console.error('Erro ao carregar tokens:', e)
+    }
     setLoading(false)
   }
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null))
-    load()
-  }, [])
+  useEffect(() => { load() }, [])
 
-  async function generateToken(requestId?: string, reqNotes?: string) {
+  async function generateToken(requestId?: string) {
     setGenerating(requestId ?? 'new')
-    const { data, error } = await supabase
-      .from('invite_tokens')
-      .insert({ notes: (reqNotes ?? notes.trim()) || null, created_by: userId })
-      .select('id, token')
-      .single()
-
-    if (error || !data) { setGenerating(false); return }
-
-    if (requestId) {
-      await supabase.from('token_requests').update({
-        status: 'token_sent', token_id: data.id
-      }).eq('id', requestId)
+    try {
+      if (requestId) {
+        const data = await gestao('handle_token_request', { request_id: requestId, action: 'approve' })
+        setModal(data.token)
+      } else {
+        const data = await gestao('create_token', { notes: notes.trim() || undefined })
+        setModal(data.token)
+        setNotes('')
+      }
+      load()
+    } catch (e) {
+      console.error('Erro ao gerar token:', e)
     }
-
-    setNotes('')
     setGenerating(false)
-    setModal(data.token)
-    load()
   }
 
   async function rejectRequest(id: string) {
-    await supabase.from('token_requests').update({ status: 'rejected' }).eq('id', id)
-    load()
+    try {
+      await gestao('handle_token_request', { request_id: id, action: 'reject' })
+      load()
+    } catch (e) {
+      console.error('Erro ao rejeitar:', e)
+    }
   }
 
   const pending = requests.filter(r => r.status === 'pending')
@@ -176,7 +172,7 @@ export default function TokensPage() {
                       <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{fmt(r.created_at)}</p>
                     </div>
                     <div className="flex gap-2 shrink-0">
-                      <Button size="sm" onClick={() => generateToken(r.id, `Para: ${r.name} (${r.email})`)}
+                      <Button size="sm" onClick={() => generateToken(r.id)}
                         loading={generating === r.id}>
                         <Key size={12} className="mr-1" /> Gerar e enviar
                       </Button>
@@ -193,7 +189,7 @@ export default function TokensPage() {
         </div>
       )}
 
-      {/* Lista de todos os tokens */}
+      {/* Lista de tokens */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
