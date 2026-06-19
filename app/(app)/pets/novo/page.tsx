@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import type { PetSpecies, PetSex } from '@/types'
 import { getIdealWeight } from '@/lib/idealWeight'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, CalendarDays, Clock } from 'lucide-react'
 
 const SPECIES: { value: PetSpecies; label: string; emoji: string }[] = [
   { value: 'dog',    label: 'Cachorro', emoji: '🐶' },
@@ -28,13 +28,26 @@ function calcAgeMonths(birthDate: string): number | null {
   return (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
 }
 
+function formatAge(months: number): string {
+  const y = Math.floor(months / 12)
+  const m = months % 12
+  if (y === 0) return `${m} ${m === 1 ? 'mês' : 'meses'}`
+  if (m === 0) return `${y} ${y === 1 ? 'ano' : 'anos'}`
+  return `${y} ${y === 1 ? 'ano' : 'anos'} e ${m} ${m === 1 ? 'mês' : 'meses'}`
+}
+
 export default function NovoPetPage() {
-  const router       = useRouter()
+  const router        = useRouter()
   const { createPet } = usePets()
-  const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState('')
   const [idealSuggestion, setIdealSuggestion] = useState<{ label: string; value: number } | null>(null)
   const [userEditedIdeal, setUserEditedIdeal]  = useState(false)
+
+  // Modo de entrada de data
+  const [birthMode, setBirthMode] = useState<'date' | 'age'>('date')
+  const [ageYears,  setAgeYears]  = useState('')
+  const [ageMths,   setAgeMths]   = useState('')
 
   const [form, setForm] = useState({
     name: '', species: 'dog' as PetSpecies, breed: '', birth_date: '',
@@ -47,18 +60,29 @@ export default function NovoPetPage() {
     if (k === 'ideal_weight') setUserEditedIdeal(true)
   }
 
-  // Recalcular sugestão quando muda espécie, raça ou nascimento
+  // Quando usuário informa a idade, calcula o ano de nascimento e preenche birth_date
   useEffect(() => {
-    const ageMonths = form.birth_date ? calcAgeMonths(form.birth_date) : null
-    const result    = getIdealWeight(form.species, form.breed, ageMonths)
+    if (birthMode !== 'age') return
+    const y = parseInt(ageYears) || 0
+    const m = parseInt(ageMths)  || 0
+    if (y === 0 && m === 0) { setForm(p => ({ ...p, birth_date: '' })); return }
+    const d = new Date()
+    d.setFullYear(d.getFullYear() - y)
+    d.setMonth(d.getMonth() - m)
+    // Preenche o ano calculado; dia e mês ficam como hoje (usuário pode ajustar no campo data abaixo)
+    setForm(p => ({ ...p, birth_date: d.toISOString().split('T')[0] }))
+  }, [ageYears, ageMths, birthMode])
+
+  // Sugestão de peso ideal
+  useEffect(() => {
+    const months = calcAgeMonths(form.birth_date)
+    const result = getIdealWeight(form.species, form.breed, months)
     if (result) {
       const label = result.source === 'breed'
         ? `${result.min}–${result.max} kg pela raça${!result.isAdult ? ' (filhote)' : ''}`
         : `${result.min}–${result.max} kg estimado`
       setIdealSuggestion({ label, value: result.ideal })
-      if (!userEditedIdeal) {
-        setForm(p => ({ ...p, ideal_weight: String(result.ideal) }))
-      }
+      if (!userEditedIdeal) setForm(p => ({ ...p, ideal_weight: String(result.ideal) }))
     } else {
       setIdealSuggestion(null)
     }
@@ -86,6 +110,7 @@ export default function NovoPetPage() {
   }
 
   const selectedSpecies = SPECIES.find(s => s.value === form.species)
+  const ageMonthsCalc   = form.birth_date ? calcAgeMonths(form.birth_date) : null
 
   return (
     <div>
@@ -127,8 +152,81 @@ export default function NovoPetPage() {
                 value={form.breed}
                 onChange={e => { set('breed')(e); setUserEditedIdeal(false) }}
               />
-              <div className="grid grid-cols-2 gap-3">
-                <Input label="Data de nascimento" type="date" value={form.birth_date} onChange={set('birth_date')} />
+
+              {/* Toggle data / idade */}
+              <div>
+                <label className="text-sm font-semibold text-slate-700 block mb-2">Nascimento</label>
+                <div className="flex gap-2 mb-3">
+                  <button type="button"
+                    onClick={() => setBirthMode('date')}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border-2 text-xs font-semibold transition-all
+                      ${birthMode === 'date' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}>
+                    <CalendarDays size={13} /> Data de nascimento
+                  </button>
+                  <button type="button"
+                    onClick={() => setBirthMode('age')}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border-2 text-xs font-semibold transition-all
+                      ${birthMode === 'age' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}>
+                    <Clock size={13} /> Informar idade
+                  </button>
+                </div>
+
+                {birthMode === 'date' ? (
+                  <div>
+                    <input
+                      type="date"
+                      value={form.birth_date}
+                      onChange={set('birth_date')}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {ageMonthsCalc !== null && ageMonthsCalc >= 0 && (
+                      <p className="text-xs text-slate-500 mt-1.5 pl-1">
+                        Idade: <span className="font-semibold text-slate-700">{formatAge(ageMonthsCalc)}</span>
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-slate-500 font-medium block mb-1">Anos</label>
+                        <input
+                          type="number" min="0" max="30" placeholder="0"
+                          value={ageYears}
+                          onChange={e => setAgeYears(e.target.value)}
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-500 font-medium block mb-1">Meses</label>
+                        <input
+                          type="number" min="0" max="11" placeholder="0"
+                          value={ageMths}
+                          onChange={e => setAgeMths(e.target.value)}
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+
+                    {form.birth_date && (
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+                        <p className="text-xs text-slate-500">
+                          Ano estimado: <span className="font-semibold text-slate-700">{form.birth_date.slice(0, 4)}</span>
+                          <span className="text-slate-400"> · ajuste a data completa se souber:</span>
+                        </p>
+                        <input
+                          type="date"
+                          value={form.birth_date}
+                          onChange={set('birth_date')}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 gap-3">
                 <Select label="Sexo" value={form.sex} onChange={set('sex')}
                   options={[
                     { value: '',       label: 'Não informado' },
@@ -146,19 +244,17 @@ export default function NovoPetPage() {
               <h3 className="font-semibold text-slate-700">Peso</h3>
               <div className="grid grid-cols-2 gap-3">
                 <Input label="Peso atual (kg)" type="number" step="0.1" placeholder="Ex: 8.5" value={form.weight_kg} onChange={set('weight_kg')} />
-                <div>
-                  <Input label="Peso ideal (kg)" type="number" step="0.1" placeholder="Ex: 8.0" value={form.ideal_weight} onChange={set('ideal_weight')} />
-                </div>
+                <Input label="Peso ideal (kg)" type="number" step="0.1" placeholder="Ex: 8.0" value={form.ideal_weight} onChange={set('ideal_weight')} />
               </div>
               {idealSuggestion && (
-                <div className="flex items-center gap-2 text-xs bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-3 py-2">
+                <div className="flex items-center gap-2 text-xs bg-blue-50 border border-blue-200 rounded-xl px-3 py-2">
                   <Sparkles size={12} className="text-blue-500 shrink-0" />
-                  <span className="text-blue-700 dark:text-blue-300">{idealSuggestion.label}</span>
+                  <span className="text-blue-700">{idealSuggestion.label}</span>
                   {userEditedIdeal && (
                     <button
                       type="button"
                       onClick={() => { setForm(p => ({ ...p, ideal_weight: String(idealSuggestion.value) })); setUserEditedIdeal(false) }}
-                      className="ml-auto text-blue-600 dark:text-blue-400 font-semibold hover:underline whitespace-nowrap"
+                      className="ml-auto text-blue-600 font-semibold hover:underline whitespace-nowrap"
                     >
                       Usar sugestão
                     </button>
@@ -176,7 +272,7 @@ export default function NovoPetPage() {
               <div>
                 <label className="text-sm font-semibold text-slate-700 block mb-1.5">Observações</label>
                 <textarea
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                   rows={3} placeholder="Alergias, comportamento, histórico..." value={form.notes}
                   onChange={set('notes')} />
               </div>
