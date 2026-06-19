@@ -58,10 +58,10 @@ export default function CalendarioPage() {
     .sort((a,b) => a.next_date!.localeCompare(b.next_date!))
 
   return (
-    <div>
+    <div className="flex flex-col h-full">
       <TopBar title="Calendário" subtitle="Próximos eventos e compromissos" />
 
-      <div className="p-4 lg:p-6 max-w-2xl space-y-4">
+      <div className="flex-1 overflow-auto p-4 lg:p-6 max-w-2xl space-y-4 pb-24">
 
         {/* Calendar */}
         <Card>

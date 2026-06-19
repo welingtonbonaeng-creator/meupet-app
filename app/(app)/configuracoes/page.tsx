@@ -48,10 +48,10 @@ export default function ConfiguracoesPage() {
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setForm(p => ({ ...p, [k]: e.target.value }))
 
   return (
-    <div>
+    <div className="flex flex-col h-full">
       <TopBar title="Configurações" subtitle="Gerencie sua conta" />
 
-      <div className="p-4 lg:p-6 max-w-xl space-y-4">
+      <div className="flex-1 overflow-auto p-4 lg:p-6 max-w-xl space-y-4 pb-24">
 
         {/* Plano */}
         {profile && (

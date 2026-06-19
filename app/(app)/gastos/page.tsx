@@ -75,10 +75,10 @@ export default function GastosPage() {
   })).filter(x => x.total > 0).sort((a,b) => b.total - a.total)
 
   return (
-    <div>
+    <div className="flex flex-col h-full">
       <TopBar title="Gastos" subtitle="Controle financeiro dos seus pets" />
 
-      <div className="p-4 lg:p-6 max-w-2xl space-y-4">
+      <div className="flex-1 overflow-auto p-4 lg:p-6 max-w-2xl space-y-4 pb-24">
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
@@ -166,7 +166,7 @@ export default function GastosPage() {
       </div>
 
       <Modal open={modal} onClose={() => setModal(false)} title="Novo gasto">
-        <div className="space-y-3">
+        <div className="p-5 space-y-3">
           <Select label="Pet *" value={form.pet_id} onChange={e => setForm(p => ({ ...p, pet_id: e.target.value }))}
             options={[{ value:'', label:'Selecione o pet' }, ...pets.map(p => ({ value: p.id, label: p.name }))]} />
           <Select label="Categoria *" value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value as ExpenseCategory }))}
