@@ -20,6 +20,83 @@ import {
 
 const DIARY_TYPES: DiaryType[] = ['vaccine','appointment','deworming','exam','medication','bath','grooming','surgery','weight','note','other']
 
+// ── Gráfico de peso (SVG puro) ────────────────────────────────────────────────
+function WeightChart({ history, idealWeight }: { history: { id: string; weight_kg: number; measured_at: string }[], idealWeight?: number | null }) {
+  if (history.length < 2) return null
+  const W = 300, H = 120
+  const pad = { t: 14, r: 14, b: 26, l: 38 }
+  const iW = W - pad.l - pad.r, iH = H - pad.t - pad.b
+  const weights = history.map(h => h.weight_kg)
+  const allVals = idealWeight ? [...weights, idealWeight] : weights
+  const minV = Math.min(...allVals), maxV = Math.max(...allVals)
+  const range = maxV - minV || 0.5
+  const x = (i: number) => pad.l + (i / Math.max(history.length - 1, 1)) * iW
+  const y = (v: number) => pad.t + ((maxV - v) / range) * iH
+  const pts = history.map((h, i) => `${x(i)},${y(h.weight_kg)}`).join(' ')
+  const fmtDate = (d: string) => new Date(d + 'T12:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+  const yTicks = [minV, (minV + maxV) / 2, maxV].filter((_, i, a) => a.length < 3 || i !== 1 || range > 0.4)
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-3 mb-4">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 120 }}>
+        {yTicks.map((v, i) => (
+          <g key={i}>
+            <line x1={pad.l} y1={y(v)} x2={W - pad.r} y2={y(v)} stroke="#e2e8f0" strokeWidth="0.8" strokeDasharray="3,3" />
+            <text x={pad.l - 5} y={y(v) + 3.5} textAnchor="end" fontSize="8.5" fill="#94a3b8">{v.toFixed(1)}</text>
+          </g>
+        ))}
+        {idealWeight != null && (
+          <line x1={pad.l} y1={y(idealWeight)} x2={W - pad.r} y2={y(idealWeight)}
+            stroke="#22c55e" strokeWidth="1.5" strokeDasharray="5,3" opacity="0.8" />
+        )}
+        <polyline points={`${x(0)},${y(minV) + iH * 0} ${pts} ${x(history.length - 1)},${pad.t + iH}`}
+          fill="none" stroke="none" />
+        <polyline points={pts} fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+        {history.map((h, i) => {
+          const isLast = i === history.length - 1
+          return (
+            <g key={h.id}>
+              {isLast && <circle cx={x(i)} cy={y(h.weight_kg)} r={8} fill="#3b82f6" fillOpacity="0.12" />}
+              <circle cx={x(i)} cy={y(h.weight_kg)} r={isLast ? 4.5 : 3.5}
+                fill={isLast ? '#3b82f6' : '#fff'} stroke="#3b82f6" strokeWidth="2" />
+            </g>
+          )
+        })}
+        <text x={x(0)} y={H - 4} textAnchor="middle" fontSize="8" fill="#94a3b8">{fmtDate(history[0].measured_at)}</text>
+        <text x={x(history.length - 1)} y={H - 4} textAnchor="middle" fontSize="8" fill="#94a3b8">{fmtDate(history[history.length - 1].measured_at)}</text>
+      </svg>
+      {idealWeight != null && (
+        <div className="flex items-center gap-1.5 mt-0.5 px-1">
+          <div className="w-5 border-t-2 border-dashed border-emerald-500" />
+          <span className="text-[10px] text-slate-400">ideal: {idealWeight} kg</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Resumo de peso ────────────────────────────────────────────────────────────
+function WeightSummary({ history }: { history: { weight_kg: number }[] }) {
+  if (history.length < 2) return null
+  const weights = history.map(h => h.weight_kg)
+  const diff = weights[weights.length - 1] - weights[0]
+  const min  = Math.min(...weights), max = Math.max(...weights)
+  const diffColor = diff > 0 ? 'text-red-500' : diff < 0 ? 'text-emerald-600' : 'text-slate-400'
+  return (
+    <div className="grid grid-cols-3 gap-2 mb-4">
+      {[
+        { label: 'Variação', value: `${diff > 0 ? '+' : ''}${diff.toFixed(1)} kg`, color: diffColor },
+        { label: 'Mínimo',   value: `${min} kg`,  color: 'text-slate-700 dark:text-slate-200' },
+        { label: 'Máximo',   value: `${max} kg`,  color: 'text-slate-700 dark:text-slate-200' },
+      ].map(({ label, value, color }) => (
+        <div key={label} className="bg-white dark:bg-slate-800 rounded-xl px-2 py-2.5 text-center border border-slate-100 dark:border-slate-700">
+          <p className="text-[10px] text-slate-400 mb-0.5">{label}</p>
+          <p className={`text-sm font-bold ${color}`}>{value}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 const SPECIES_GRADIENT: Record<string, string> = {
   dog:     'from-amber-400 to-orange-500',
   cat:     'from-violet-400 to-purple-500',
@@ -43,7 +120,7 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const supabase = createClient()
   const { pets, updatePet, deletePet } = usePets()
   const { entries, addEntry, deleteEntry } = useDiary(id)
-  const { history, addWeight } = useWeightHistory(id)
+  const { history, addWeight, deleteWeight } = useWeightHistory(id)
   const pet = pets.find(p => p.id === id)
 
   const [userId, setUserId]     = useState<string | null>(null)
@@ -376,7 +453,7 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
           </div>
         )}
 
-        {/* ── Histórico de peso ── */}
+        {/* ── Aba peso ── */}
         {tab === 'weight' && (
           <div className="px-4 mt-3">
             <div className="flex justify-end mb-3">
@@ -391,37 +468,50 @@ function PetDetail({ id, onBack }: { id: string; onBack: () => void }) {
                 <p className="text-xs mt-1">Acompanhe a evolução do peso ao longo do tempo</p>
               </div>
             ) : (
-              <div className="space-y-2">
-                {[...history].reverse().map((h, i) => {
-                  const prev = [...history].reverse()[i + 1]
-                  const diff = prev ? h.weight_kg - prev.weight_kg : null
-                  return (
-                    <div key={h.id} className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-700">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Scale size={16} className="text-blue-500 shrink-0" />
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-800 dark:text-slate-100">{h.weight_kg} kg</span>
-                              {diff !== null && (
-                                <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${
-                                  diff > 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-500' :
-                                  diff < 0 ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600' :
-                                  'bg-slate-100 dark:bg-slate-700 text-slate-400'
-                                }`}>
-                                  {diff > 0 ? `+${diff.toFixed(1)}` : diff.toFixed(1)} kg
-                                </span>
-                              )}
+              <>
+                <WeightSummary history={history} />
+                <WeightChart history={history} idealWeight={pet.ideal_weight} />
+                <div className="space-y-2">
+                  {[...history].reverse().map((h, i) => {
+                    const prev = [...history].reverse()[i + 1]
+                    const diff = prev ? h.weight_kg - prev.weight_kg : null
+                    return (
+                      <div key={h.id} className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Scale size={16} className="text-blue-500 shrink-0" />
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-slate-800 dark:text-slate-100">{h.weight_kg} kg</span>
+                                {diff !== null && (
+                                  <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${
+                                    diff > 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-500' :
+                                    diff < 0 ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600' :
+                                    'bg-slate-100 dark:bg-slate-700 text-slate-400'
+                                  }`}>
+                                    {diff > 0 ? `+${diff.toFixed(1)}` : diff.toFixed(1)} kg
+                                  </span>
+                                )}
+                              </div>
+                              {h.notes && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{h.notes}</p>}
                             </div>
-                            {h.notes && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{h.notes}</p>}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-slate-400">{formatDate(h.measured_at)}</span>
+                            <button
+                              onClick={() => deleteWeight(h.id)}
+                              className="p-1.5 rounded-lg text-slate-300 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                              title="Apagar pesagem"
+                            >
+                              <Trash2 size={13} />
+                            </button>
                           </div>
                         </div>
-                        <div className="text-xs text-slate-400">{formatDate(h.measured_at)}</div>
                       </div>
-                    </div>
-                  )
-                })}
-              </div>
+                    )
+                  })}
+                </div>
+              </>
             )}
           </div>
         )}

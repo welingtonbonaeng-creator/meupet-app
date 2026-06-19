@@ -96,7 +96,12 @@ export function useWeightHistory(petId?: string) {
     return data
   }
 
-  return { history, addWeight }
+  async function deleteWeight(id: string) {
+    await supabase.from('pet_weight_history').delete().eq('id', id)
+    setHistory(p => p.filter(x => x.id !== id))
+  }
+
+  return { history, addWeight, deleteWeight }
 }
 
 export function useExpenses(petId?: string) {
