@@ -13,7 +13,7 @@ import type { Profile, DiaryEntry } from '@/types'
 import { DIARY_TYPE_LABELS, DIARY_TYPE_ICONS } from '@/types'
 import {
   Heart, Calendar, Syringe, Scale, Plus, ChevronRight,
-  AlertCircle, TrendingUp, Star, Bell, X
+  AlertCircle, TrendingUp, Star, Bell, X, BookOpen, Weight
 } from 'lucide-react'
 
 export default function DashboardPage() {
@@ -115,7 +115,7 @@ export default function DashboardPage() {
     <div className="flex flex-col h-full">
       <TopBar title={`${greeting}, ${firstName}! 👋`} subtitle="Aqui está o resumo dos seus pets" userName={profile?.name} />
 
-      <div className="flex-1 overflow-auto p-4 lg:p-6 space-y-4 max-w-5xl pb-24">
+      <div className="flex-1 overflow-auto p-4 lg:p-6 space-y-4 max-w-2xl mx-auto w-full pb-24">
 
         {/* Banner ativar notificações */}
         {notifPermission === 'default' && (
@@ -185,6 +185,27 @@ export default function DashboardPage() {
             <Link href="/calendario" className="mt-3 flex items-center gap-1 text-xs text-amber-500 hover:underline">
               Ver no calendário <ChevronRight size={12} />
             </Link>
+          </div>
+        )}
+
+        {/* Ações rápidas */}
+        {pets.length > 0 && (
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { icon: Plus,     label: 'Registro',  href: '/pets',     color: 'bg-blue-50 dark:bg-blue-900/30 text-blue-600' },
+              { icon: Weight,   label: 'Peso',      href: '/peso',     color: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600' },
+              { icon: BookOpen, label: 'Diário',    href: '/diario',   color: 'bg-violet-50 dark:bg-violet-900/30 text-violet-600' },
+              { icon: Calendar, label: 'Agenda',    href: '/calendario', color: 'bg-amber-50 dark:bg-amber-900/30 text-amber-600' },
+            ].map(({ icon: Icon, label, href, color }) => (
+              <Link key={label} href={href}>
+                <div className="flex flex-col items-center gap-1.5 py-3 px-1 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
+                    <Icon size={20} />
+                  </div>
+                  <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">{label}</span>
+                </div>
+              </Link>
+            ))}
           </div>
         )}
 
@@ -282,7 +303,7 @@ export default function DashboardPage() {
                     <Card className="hover:shadow-md transition-shadow cursor-pointer">
                       <CardContent className="p-4">
                         <div className="flex items-center gap-3 mb-3">
-                          <div className="w-12 h-12 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-2xl flex-shrink-0">
+                          <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-2xl flex-shrink-0 ring-2 ring-slate-100 dark:ring-slate-700">
                             {pet.photo_url
                               ? <img src={pet.photo_url} alt={pet.name} className="w-full h-full object-cover" />
                               : speciesEmoji(pet.species)}
@@ -310,8 +331,8 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Próximos eventos (exceto hoje e amanhã já mostrados nos banners) */}
-        {(upcomingRest.length > 0 || todayEvents.length > 0 || tomorrowEvents.length > 0) && upcoming.length > 0 && (
+        {/* Próximos eventos */}
+        {pets.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">Próximos eventos</h2>
@@ -319,32 +340,47 @@ export default function DashboardPage() {
                 Ver calendário <ChevronRight size={12} />
               </Link>
             </div>
-            <Card>
-              <CardContent className="p-0 divide-y divide-slate-50 dark:divide-slate-700/50">
-                {upcoming.slice(0, 5).map(entry => {
-                  const ds       = entry.next_date?.slice(0,10) || ''
-                  const daysLeft = Math.ceil((new Date(ds + 'T12:00:00').getTime() - new Date(todayStr + 'T12:00:00').getTime()) / 86400000)
-                  const isUrgent = daysLeft <= 1
-                  return (
-                    <div key={entry.id} className="flex items-center gap-3 p-4">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${isUrgent ? 'bg-red-50 dark:bg-red-900/20' : 'bg-blue-50 dark:bg-blue-900/30'}`}>
-                        {DIARY_TYPE_ICONS[entry.type]}
+            {upcoming.length === 0 ? (
+              <Card>
+                <CardContent className="p-6 flex flex-col items-center text-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-2xl">📅</div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">Nenhum evento agendado</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Adicione vacinas, consultas e lembretes no perfil do pet</p>
+                  </div>
+                  <Link href="/pets">
+                    <Button size="sm" variant="outline" className="gap-1"><Plus size={13} /> Agendar evento</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="p-0 divide-y divide-slate-50 dark:divide-slate-700/50">
+                  {upcoming.slice(0, 5).map(entry => {
+                    const ds       = entry.next_date?.slice(0,10) || ''
+                    const daysLeft = Math.ceil((new Date(ds + 'T12:00:00').getTime() - new Date(todayStr + 'T12:00:00').getTime()) / 86400000)
+                    const isUrgent = daysLeft <= 1
+                    return (
+                      <div key={entry.id} className="flex items-center gap-3 p-4">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 ${isUrgent ? 'bg-red-50 dark:bg-red-900/20' : 'bg-blue-50 dark:bg-blue-900/30'}`}>
+                          {DIARY_TYPE_ICONS[entry.type]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">{entry.title}</div>
+                          <div className="text-xs text-slate-500">{entry.pet_name} · {DIARY_TYPE_LABELS[entry.type]}</div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">{formatDate(entry.next_date!)}</div>
+                          <Badge variant={daysLeft === 0 ? 'danger' : daysLeft === 1 ? 'warning' : 'info'} className="text-[10px] mt-0.5">
+                            {daysLeft === 0 ? 'Hoje' : daysLeft === 1 ? 'Amanhã' : `${daysLeft}d`}
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">{entry.title}</div>
-                        <div className="text-xs text-slate-500">{entry.pet_name} · {DIARY_TYPE_LABELS[entry.type]}</div>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">{formatDate(entry.next_date!)}</div>
-                        <Badge variant={daysLeft === 0 ? 'danger' : daysLeft === 1 ? 'warning' : 'info'} className="text-[10px] mt-0.5">
-                          {daysLeft === 0 ? 'Hoje' : daysLeft === 1 ? 'Amanhã' : `${daysLeft}d`}
-                        </Badge>
-                      </div>
-                    </div>
-                  )
-                })}
-              </CardContent>
-            </Card>
+                    )
+                  })}
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
 
