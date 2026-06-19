@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePets } from '@/hooks/usePets'
 import { TopBar } from '@/components/layout/TopBar'
@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import type { PetSpecies, PetSex } from '@/types'
+import { getIdealWeight } from '@/lib/idealWeight'
+import { Sparkles } from 'lucide-react'
 
 const SPECIES: { value: PetSpecies; label: string; emoji: string }[] = [
   { value: 'dog',    label: 'Cachorro', emoji: '🐶' },
@@ -19,19 +21,48 @@ const SPECIES: { value: PetSpecies; label: string; emoji: string }[] = [
   { value: 'other',  label: 'Outro',    emoji: '🐾' },
 ]
 
+function calcAgeMonths(birthDate: string): number | null {
+  if (!birthDate) return null
+  const birth = new Date(birthDate)
+  const now   = new Date()
+  return (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
+}
+
 export default function NovoPetPage() {
   const router       = useRouter()
   const { createPet } = usePets()
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState('')
+  const [idealSuggestion, setIdealSuggestion] = useState<{ label: string; value: number } | null>(null)
+  const [userEditedIdeal, setUserEditedIdeal]  = useState(false)
+
   const [form, setForm] = useState({
     name: '', species: 'dog' as PetSpecies, breed: '', birth_date: '',
     sex: '' as PetSex | '', weight_kg: '', ideal_weight: '', color: '',
     microchip: '', notes: '',
   })
 
-  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm(p => ({ ...p, [k]: e.target.value }))
+    if (k === 'ideal_weight') setUserEditedIdeal(true)
+  }
+
+  // Recalcular sugestão quando muda espécie, raça ou nascimento
+  useEffect(() => {
+    const ageMonths = form.birth_date ? calcAgeMonths(form.birth_date) : null
+    const result    = getIdealWeight(form.species, form.breed, ageMonths)
+    if (result) {
+      const label = result.source === 'breed'
+        ? `${result.min}–${result.max} kg pela raça${!result.isAdult ? ' (filhote)' : ''}`
+        : `${result.min}–${result.max} kg estimado`
+      setIdealSuggestion({ label, value: result.ideal })
+      if (!userEditedIdeal) {
+        setForm(p => ({ ...p, ideal_weight: String(result.ideal) }))
+      }
+    } else {
+      setIdealSuggestion(null)
+    }
+  }, [form.species, form.breed, form.birth_date])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -65,14 +96,14 @@ export default function NovoPetPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
 
-          {/* Espécie selector */}
+          {/* Espécie */}
           <Card>
             <CardContent className="p-4">
               <label className="text-sm font-semibold text-slate-700 block mb-3">Tipo de pet</label>
               <div className="grid grid-cols-4 gap-2">
                 {SPECIES.map(s => (
                   <button key={s.value} type="button"
-                    onClick={() => setForm(p => ({ ...p, species: s.value }))}
+                    onClick={() => { setForm(p => ({ ...p, species: s.value })); setUserEditedIdeal(false) }}
                     className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all text-sm font-medium
                       ${form.species === s.value
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
@@ -90,7 +121,12 @@ export default function NovoPetPage() {
             <CardContent className="p-4 space-y-3">
               <h3 className="font-semibold text-slate-700">Dados básicos</h3>
               <Input label={`Nome do ${selectedSpecies?.label || 'pet'}`} placeholder="Ex: Rex, Mimi..." value={form.name} onChange={set('name')} required />
-              <Input label="Raça (opcional)" placeholder={`Ex: ${form.species === 'dog' ? 'Labrador' : 'Siamês'}`} value={form.breed} onChange={set('breed')} />
+              <Input
+                label="Raça (opcional)"
+                placeholder={`Ex: ${form.species === 'dog' ? 'Labrador, Poodle, Shih Tzu...' : 'Siamês, Persa...'}`}
+                value={form.breed}
+                onChange={e => { set('breed')(e); setUserEditedIdeal(false) }}
+              />
               <div className="grid grid-cols-2 gap-3">
                 <Input label="Data de nascimento" type="date" value={form.birth_date} onChange={set('birth_date')} />
                 <Select label="Sexo" value={form.sex} onChange={set('sex')}
@@ -110,8 +146,25 @@ export default function NovoPetPage() {
               <h3 className="font-semibold text-slate-700">Peso</h3>
               <div className="grid grid-cols-2 gap-3">
                 <Input label="Peso atual (kg)" type="number" step="0.1" placeholder="Ex: 8.5" value={form.weight_kg} onChange={set('weight_kg')} />
-                <Input label="Peso ideal (kg)" type="number" step="0.1" placeholder="Ex: 8.0" value={form.ideal_weight} onChange={set('ideal_weight')} />
+                <div>
+                  <Input label="Peso ideal (kg)" type="number" step="0.1" placeholder="Ex: 8.0" value={form.ideal_weight} onChange={set('ideal_weight')} />
+                </div>
               </div>
+              {idealSuggestion && (
+                <div className="flex items-center gap-2 text-xs bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-3 py-2">
+                  <Sparkles size={12} className="text-blue-500 shrink-0" />
+                  <span className="text-blue-700 dark:text-blue-300">{idealSuggestion.label}</span>
+                  {userEditedIdeal && (
+                    <button
+                      type="button"
+                      onClick={() => { setForm(p => ({ ...p, ideal_weight: String(idealSuggestion.value) })); setUserEditedIdeal(false) }}
+                      className="ml-auto text-blue-600 dark:text-blue-400 font-semibold hover:underline whitespace-nowrap"
+                    >
+                      Usar sugestão
+                    </button>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 

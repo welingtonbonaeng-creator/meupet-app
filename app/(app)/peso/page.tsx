@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import type { Pet } from '@/types'
-import { Scale, Plus, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { Scale, Plus, TrendingUp, TrendingDown, Minus, Sparkles } from 'lucide-react'
+import { getIdealWeight } from '@/lib/idealWeight'
 
 type WeightEntry = { id: string; pet_id: string; weight_kg: number; measured_at: string; notes?: string }
 
@@ -74,7 +75,12 @@ export default function PesoPage() {
   const petOptions = pets.map(p => ({ value: p.id, label: `${p.name}` }))
   const ageMonths  = calcAgeMonths(selectedPet?.birth_date ?? null)
 
-  const ideal = selectedPet?.ideal_weight
+  const storedIdeal = selectedPet?.ideal_weight ?? null
+  const calculatedIdeal = selectedPet
+    ? getIdealWeight(selectedPet.species, selectedPet.breed, ageMonths)
+    : null
+  const ideal       = storedIdeal ?? calculatedIdeal?.ideal ?? null
+  const idealRange  = storedIdeal ? null : calculatedIdeal
   const status = latest && ideal
     ? latest.weight_kg > ideal * 1.1 ? 'acima' : latest.weight_kg < ideal * 0.9 ? 'abaixo' : 'ideal'
     : null
@@ -116,7 +122,15 @@ export default function PesoPage() {
                   </div>
                   <div className="text-right space-y-1">
                     {status && statusBadge[status]}
-                    {ideal && <div className="text-xs text-slate-500 dark:text-slate-400">Ideal: {ideal} kg</div>}
+                    {ideal && !idealRange && (
+                      <div className="text-xs text-slate-500 dark:text-slate-400">Ideal: {ideal} kg</div>
+                    )}
+                    {idealRange && (
+                      <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 justify-end">
+                        <Sparkles size={10} />
+                        <span>{idealRange.min}–{idealRange.max} kg</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -166,8 +180,13 @@ export default function PesoPage() {
                       )
                     })}
                   </div>
-                  {ideal && (
+                  {ideal && !idealRange && (
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 text-center">Peso ideal: {ideal} kg</p>
+                  )}
+                  {idealRange && (
+                    <p className="text-xs text-blue-500 dark:text-blue-400 mt-2 text-center flex items-center justify-center gap-1">
+                      <Sparkles size={10} /> Estimado pela raça: {idealRange.min}–{idealRange.max} kg
+                    </p>
                   )}
                 </CardContent>
               </Card>
