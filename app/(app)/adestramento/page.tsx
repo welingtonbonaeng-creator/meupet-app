@@ -13,6 +13,7 @@ import { Sparkles, Trophy, Clock, AlertCircle, ChevronDown, ChevronUp, CheckCirc
 type Exercicio = {
   nome: string
   objetivo: string
+  material: string
   passos: string[]
   dica: string
   sinal_sucesso: string
@@ -30,23 +31,35 @@ type TrainingPlan = {
   diagnostico: string
   nivel: string
   semanas: Semana[]
-  comandos_basicos: string[]
+  comportamentos_alvo: string[]
   dicas_reforco: string[]
   erros_comuns: string[]
   tempo_estimado_semanas: number
 }
 
-type CompletionKey = `${number}-${number}` // semana-exercicioIdx
-type CompletionMap = Record<CompletionKey, string> // key → data de conclusão (YYYY-MM-DD)
+type CompletionKey = `${number}-${number}`
+type CompletionMap = Record<CompletionKey, string>
 
-const PROBLEMAS_OPTIONS = [
-  'Latir excessivamente', 'Morder ou mastigar objetos', 'Pular nas pessoas',
+type Extras = {
+  nivel_tutor: string
+  ambiente: string
+  disponibilidade: string
+  recompensa: string
+}
+
+const PROBLEMAS_DOG = [
+  'Latir excessivamente', 'Morder / mastigar objetos', 'Pular nas pessoas',
   'Não atender quando chamado', 'Puxar a guia', 'Ansiedade de separação',
   'Brigar com outros animais', 'Medo de barulhos', 'Fazer necessidades no lugar errado',
+  'Roubar comida', 'Correr para a rua', 'Cavar no jardim',
 ]
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const ANON_KEY    = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const PROBLEMAS_CAT = [
+  'Arranhar móveis / sofás', 'Morder / arranhar o dono', 'Não usar a caixa de areia',
+  'Agitação noturna', 'Medo de pessoas ou barulhos', 'Marcar território com spray',
+  'Atacar outros animais', 'Não aceita colo / manipulação', 'Comer muito rápido',
+  'Miar excessivamente', 'Destruir objetos', 'Esconder / isolar-se muito',
+]
 
 function calcAgeMonths(birthDate: string | null): number | null {
   if (!birthDate) return null
@@ -59,29 +72,44 @@ function formatDateBR(iso: string) {
   return new Date(iso + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const ANON_KEY     = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
 export default function AdestamentoPage() {
   const supabase = createClient()
   const { pets, loading: petsLoading } = usePets()
   const [selectedPetId, setSelectedPetId] = useState('')
-  const [userId, setUserId] = useState<string | null>(null)
+  const [userId, setUserId]   = useState<string | null>(null)
   const [problemasSel, setProblemasSel] = useState<string[]>([])
-  const [plan, setPlan] = useState<TrainingPlan | null>(null)
+  const [extras, setExtras]   = useState<Extras>({
+    nivel_tutor:    'iniciante',
+    ambiente:       'apartamento',
+    disponibilidade: '10',
+    recompensa:     'petisc',
+  })
+  const [plan, setPlan]       = useState<TrainingPlan | null>(null)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [semanaAberta, setSemanaAberta] = useState<number>(0)
+  const [error, setError]     = useState('')
+  const [semanaAberta, setSemanaAberta]     = useState<number>(0)
   const [exercicioAberto, setExercicioAberto] = useState<string | null>(null)
   const [completions, setCompletions] = useState<CompletionMap>({})
-  const [toggling, setToggling] = useState<string | null>(null)
+  const [toggling, setToggling]       = useState<string | null>(null)
 
-  const selectedPet = pets.find(p => p.id === selectedPetId) as Pet | undefined
+  const selectedPet    = pets.find(p => p.id === selectedPetId) as Pet | undefined
+  const isCat          = selectedPet?.species === 'cat'
+  const problemasList  = isCat ? PROBLEMAS_CAT : PROBLEMAS_DOG
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null))
   }, [])
 
-  useEffect(() => { if (pets.length > 0 && !selectedPetId) setSelectedPetId(pets[0].id) }, [pets])
+  useEffect(() => {
+    if (pets.length > 0 && !selectedPetId) setSelectedPetId(pets[0].id)
+  }, [pets])
 
-  // Carregar conclusões salvas para o pet selecionado
+  // Limpa seleção de problemas ao trocar de pet (espécie pode mudar)
+  useEffect(() => { setProblemasSel([]) }, [selectedPetId])
+
   const loadCompletions = useCallback(async (petId: string) => {
     const { data } = await supabase
       .from('training_completions')
@@ -106,12 +134,10 @@ export default function AdestamentoPage() {
     setToggling(key)
 
     if (completions[key]) {
-      // Desmarcar
       await supabase.from('training_completions').delete()
         .eq('user_id', userId).eq('pet_id', selectedPetId).eq('semana', semana).eq('exercicio_idx', exIdx)
       setCompletions(prev => { const n = { ...prev }; delete n[key]; return n })
     } else {
-      // Marcar como concluído
       const today = new Date().toISOString().split('T')[0]
       await supabase.from('training_completions').upsert({
         user_id: userId, pet_id: selectedPetId,
@@ -131,11 +157,15 @@ export default function AdestamentoPage() {
         headers: { 'Content-Type': 'application/json', apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` },
         body: JSON.stringify({
           pet: {
-            name: selectedPet.name, species: selectedPet.species, breed: selectedPet.breed,
+            name:       selectedPet.name,
+            species:    selectedPet.species,
+            breed:      selectedPet.breed,
             age_months: calcAgeMonths(selectedPet.birth_date ?? null),
-            neutered: selectedPet.neutered, notes: selectedPet.notes,
+            neutered:   selectedPet.neutered,
+            notes:      selectedPet.notes,
           },
-          problemas: problemasSel.length > 0 ? problemasSel.join(', ') : 'Nenhum específico'
+          problemas: problemasSel.length > 0 ? problemasSel : [],
+          extras,
         })
       })
       if (!res.ok) throw new Error('Erro ao gerar plano')
@@ -148,48 +178,105 @@ export default function AdestamentoPage() {
     } finally { setLoading(false) }
   }
 
-  // Calcular progresso por semana
   function semanaProgress(semanaNum: number, total: number) {
     const done = Array.from({ length: total }, (_, i) => completions[`${semanaNum}-${i}` as CompletionKey]).filter(Boolean).length
     return { done, total, pct: total > 0 ? Math.round((done / total) * 100) : 0 }
   }
 
-  // Total de exercícios concluídos
-  const totalFeitos = Object.keys(completions).length
+  const totalFeitos     = Object.keys(completions).length
   const totalExercicios = plan?.semanas.reduce((s, w) => s + w.exercicios.length, 0) ?? 0
+  const petOptions      = pets.map(p => ({ value: p.id, label: `${p.name} (${p.species})` }))
 
-  const petOptions = pets.map(p => ({ value: p.id, label: `${p.name} (${p.species})` }))
+  const setExtra = (k: keyof Extras) => (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setExtras(prev => ({ ...prev, [k]: e.target.value }))
+    setPlan(null)
+  }
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar title="Adestramento IA" />
-      <div className="flex-1 overflow-auto p-4 space-y-4 pb-24">
+      <TopBar title="Adestramento IA" subtitle="Plano personalizado passo a passo" />
+      <div className="flex-1 overflow-auto p-4 space-y-4 pb-24 max-w-2xl">
 
-        {/* Config */}
+        {/* Formulário */}
         <Card>
-          <CardContent className="p-4 space-y-3">
+          <CardContent className="p-4 space-y-4">
             <div className="flex items-center gap-2">
               <Sparkles size={18} className="text-orange-500" />
-              <span className="font-semibold text-slate-800 dark:text-slate-100">Plano de Adestramento com Passo a Passo</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-100">Plano de Adestramento Personalizado</span>
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              A IA cria exercícios práticos com instruções detalhadas. Marque cada exercício ao concluir.
-            </p>
 
-            {petsLoading ? <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" /> : (
-              <Select label="Escolha o pet" options={petOptions} value={selectedPetId}
+            {petsLoading ? (
+              <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />
+            ) : (
+              <Select label="Pet" options={petOptions} value={selectedPetId}
                 onChange={e => { setSelectedPetId(e.target.value); setPlan(null) }} />
             )}
 
+            {/* Nível do tutor */}
+            <Select
+              label="Sua experiência com treinos"
+              value={extras.nivel_tutor}
+              onChange={setExtra('nivel_tutor')}
+              options={[
+                { value: 'iniciante',    label: '🌱 Nunca treinei antes' },
+                { value: 'intermediario', label: '📖 Já tentei algumas coisas' },
+                { value: 'experiente',   label: '🏅 Tenho experiência com treinos' },
+              ]}
+            />
+
+            {/* Ambiente */}
+            <Select
+              label="Onde vocês vivem"
+              value={extras.ambiente}
+              onChange={setExtra('ambiente')}
+              options={[
+                { value: 'apartamento_pequeno', label: '🏢 Apartamento pequeno' },
+                { value: 'apartamento_grande',  label: '🏙️ Apartamento grande' },
+                { value: 'casa_quintal',         label: '🏡 Casa com quintal' },
+                { value: 'area_rural',           label: '🌿 Área rural / fazenda' },
+              ]}
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              {/* Disponibilidade */}
+              <Select
+                label="Tempo disponível / dia"
+                value={extras.disponibilidade}
+                onChange={setExtra('disponibilidade')}
+                options={[
+                  { value: '5',  label: '⏱ 5 minutos' },
+                  { value: '10', label: '⏱ 10 minutos' },
+                  { value: '20', label: '⏱ 20 minutos' },
+                  { value: '30', label: '⏱ 30+ minutos' },
+                ]}
+              />
+
+              {/* Recompensa */}
+              <Select
+                label="Recompensa preferida"
+                value={extras.recompensa}
+                onChange={setExtra('recompensa')}
+                options={[
+                  { value: 'petisco',  label: '🍖 Petisco' },
+                  { value: 'brinquedo', label: '🎾 Brinquedo' },
+                  { value: 'elogio',   label: '🗣️ Elogio verbal' },
+                  { value: 'misto',    label: '✨ Misto' },
+                ]}
+              />
+            </div>
+
+            {/* Problemas de comportamento */}
             <div>
-              <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">Problemas a trabalhar (opcional):</p>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                Comportamentos a trabalhar <span className="text-slate-400 font-normal">(opcional)</span>
+              </p>
               <div className="flex flex-wrap gap-2">
-                {PROBLEMAS_OPTIONS.map(p => (
-                  <button key={p} onClick={() => toggleProblema(p)}
-                    className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                {problemasList.map(p => (
+                  <button key={p} type="button" onClick={() => toggleProblema(p)}
+                    className={`text-xs px-2.5 py-1.5 rounded-full border transition-all ${
                       problemasSel.includes(p)
-                        ? 'bg-orange-500 text-white border-orange-500'
-                        : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-orange-300'
+                        ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
+                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-orange-300'
                     }`}>
                     {p}
                   </button>
@@ -197,13 +284,16 @@ export default function AdestamentoPage() {
               </div>
             </div>
 
-            <Button onClick={gerar} loading={loading} disabled={!selectedPetId || loading} className="w-full">
-              {loading ? 'Criando plano detalhado...' : '🐾 Gerar Plano com Passo a Passo'}
+            <Button onClick={gerar} loading={loading} disabled={!selectedPetId || loading} className="w-full gap-2">
+              <Sparkles size={15} />
+              {loading ? 'Criando plano personalizado...' : 'Gerar Plano com IA'}
             </Button>
           </CardContent>
         </Card>
 
-        {error && <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">{error}</div>}
+        {error && (
+          <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">{error}</div>
+        )}
 
         {plan && selectedPet && (
           <div className="space-y-4">
@@ -213,14 +303,14 @@ export default function AdestamentoPage() {
                 <div className="font-bold text-lg">{selectedPet.name}</div>
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/20 capitalize">{plan.nivel}</span>
               </div>
-              <p className="text-sm text-orange-50">{plan.diagnostico}</p>
+              <p className="text-sm text-orange-50 leading-relaxed">{plan.diagnostico}</p>
               <div className="flex items-center gap-4 mt-3 text-sm">
                 <div className="flex items-center gap-1.5"><Clock size={14} /><span>{plan.tempo_estimado_semanas} semanas</span></div>
-                <div className="flex items-center gap-1.5"><Trophy size={14} /><span>{plan.comandos_basicos.length} comandos</span></div>
+                <div className="flex items-center gap-1.5"><Trophy size={14} /><span>{plan.comportamentos_alvo.length} objetivos</span></div>
               </div>
             </div>
 
-            {/* Barra de progresso geral */}
+            {/* Progresso geral */}
             {totalExercicios > 0 && (
               <Card>
                 <CardContent className="p-4">
@@ -229,10 +319,8 @@ export default function AdestamentoPage() {
                     <span className="text-sm font-bold text-orange-600 dark:text-orange-400">{totalFeitos}/{totalExercicios} exercícios</span>
                   </div>
                   <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full transition-all duration-500"
-                      style={{ width: `${totalExercicios > 0 ? (totalFeitos / totalExercicios) * 100 : 0}%` }}
-                    />
+                    <div className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full transition-all duration-500"
+                      style={{ width: `${totalExercicios > 0 ? (totalFeitos / totalExercicios) * 100 : 0}%` }} />
                   </div>
                   {totalFeitos === totalExercicios && totalExercicios > 0 && (
                     <p className="text-center text-sm font-semibold text-green-600 dark:text-green-400 mt-2">🎉 Plano concluído! Parabéns!</p>
@@ -241,16 +329,16 @@ export default function AdestamentoPage() {
               </Card>
             )}
 
-            {/* Comandos */}
+            {/* Objetivos / comandos */}
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Trophy size={16} className="text-amber-500" />
-                  <span className="font-semibold text-slate-800 dark:text-slate-100">Comandos a dominar</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-100">Objetivos do plano</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {plan.comandos_basicos.map((c, i) => (
-                    <Badge key={i} variant="warning" className="text-xs font-mono">{c}</Badge>
+                  {plan.comportamentos_alvo.map((c, i) => (
+                    <Badge key={i} variant="warning" className="text-xs font-medium">{c}</Badge>
                   ))}
                 </div>
               </CardContent>
@@ -267,20 +355,16 @@ export default function AdestamentoPage() {
                   return (
                     <Card key={i} className={semanaCompleta ? 'border-green-200 dark:border-green-800' : ''}>
                       <CardContent className="p-0">
-                        {/* Header da semana */}
                         <button
                           onClick={() => setSemanaAberta(semanaAberta === i ? -1 : i)}
                           className="w-full text-left p-4"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              {/* Indicador visual da semana */}
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                                semanaCompleta
-                                  ? 'bg-green-500 text-white'
-                                  : prog.done > 0
-                                  ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
-                                  : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                                semanaCompleta ? 'bg-green-500 text-white'
+                                : prog.done > 0 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
+                                : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                               }`}>
                                 {semanaCompleta ? '✓' : s.semana}
                               </div>
@@ -302,52 +386,40 @@ export default function AdestamentoPage() {
                               }
                             </div>
                           </div>
-
-                          {/* Mini barra de progresso da semana */}
                           {prog.total > 0 && (
                             <div className="mt-2 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all ${semanaCompleta ? 'bg-green-500' : 'bg-orange-400'}`}
-                                style={{ width: `${prog.pct}%` }}
-                              />
+                              <div className={`h-full rounded-full transition-all ${semanaCompleta ? 'bg-green-500' : 'bg-orange-400'}`}
+                                style={{ width: `${prog.pct}%` }} />
                             </div>
                           )}
                         </button>
 
-                        {/* Exercícios da semana */}
                         {semanaAberta === i && (
                           <div className="border-t border-slate-100 dark:border-slate-700">
                             {s.exercicios.map((ex, j) => {
                               const key = `${s.semana}-${j}` as CompletionKey
-                              const doneDate = completions[key]
-                              const isDone = !!doneDate
-                              const exKey = `${i}-${j}`
-                              const aberto = exercicioAberto === exKey
+                              const doneDate  = completions[key]
+                              const isDone    = !!doneDate
+                              const exKey     = `${i}-${j}`
+                              const aberto    = exercicioAberto === exKey
                               const isToggling = toggling === key
 
                               return (
                                 <div key={j} className={`border-b border-slate-100 dark:border-slate-700 last:border-0 ${isDone ? 'bg-green-50/50 dark:bg-green-900/10' : ''}`}>
-                                  {/* Header do exercício */}
                                   <div className="flex items-start gap-2 px-4 py-3">
-                                    {/* Checkbox de conclusão */}
                                     <button
                                       onClick={() => toggleCompletion(s.semana, j, ex.nome)}
                                       disabled={isToggling}
                                       className={`mt-0.5 shrink-0 transition-all ${isToggling ? 'opacity-50' : 'hover:scale-110'}`}
-                                      title={isDone ? 'Marcar como não feito' : 'Marcar como concluído'}
                                     >
                                       {isDone
                                         ? <CheckCircle size={22} className="text-green-500" />
-                                        : <Circle size={22} className="text-slate-300 dark:text-slate-600 dark:text-slate-300" />
+                                        : <Circle size={22} className="text-slate-300 dark:text-slate-600" />
                                       }
                                     </button>
 
-                                    {/* Conteúdo do exercício */}
                                     <div className="flex-1 min-w-0">
-                                      <button
-                                        onClick={() => setExercicioAberto(aberto ? null : exKey)}
-                                        className="w-full text-left"
-                                      >
+                                      <button onClick={() => setExercicioAberto(aberto ? null : exKey)} className="w-full text-left">
                                         <div className="flex items-start justify-between gap-2">
                                           <div>
                                             <p className={`text-sm font-semibold ${isDone ? 'text-green-700 dark:text-green-400 line-through' : 'text-slate-800 dark:text-slate-100'}`}>
@@ -370,9 +442,16 @@ export default function AdestamentoPage() {
                                         </div>
                                       </button>
 
-                                      {/* Detalhes (só se não concluído ou se explicitamente aberto) */}
                                       {aberto && !isDone && (
                                         <div className="mt-3 space-y-3">
+                                          {/* Material necessário */}
+                                          {ex.material && (
+                                            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700/50 rounded-xl px-3 py-2">
+                                              <span>🎒</span>
+                                              <span><span className="font-semibold">Material:</span> {ex.material}</span>
+                                            </div>
+                                          )}
+
                                           {/* Passo a passo */}
                                           <div>
                                             <p className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide mb-2">Como fazer:</p>
@@ -385,6 +464,7 @@ export default function AdestamentoPage() {
                                               ))}
                                             </ol>
                                           </div>
+
                                           <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800">
                                             <span className="text-amber-500 text-base shrink-0">💡</span>
                                             <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">{ex.dica}</p>
@@ -395,13 +475,10 @@ export default function AdestamentoPage() {
                                               <span className="font-semibold">Sucesso quando:</span> {ex.sinal_sucesso}
                                             </p>
                                           </div>
-                                          {/* Botão de concluir inline */}
-                                          <Button
-                                            size="sm"
-                                            className="w-full bg-green-600 hover:bg-green-700 gap-2"
+
+                                          <Button size="sm" className="w-full bg-green-600 hover:bg-green-700 gap-2"
                                             loading={isToggling}
-                                            onClick={() => toggleCompletion(s.semana, j, ex.nome)}
-                                          >
+                                            onClick={() => toggleCompletion(s.semana, j, ex.nome)}>
                                             <CheckCircle size={14} /> Marcar como concluído
                                           </Button>
                                         </div>
