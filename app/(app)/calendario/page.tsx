@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Modal } from '@/components/ui/modal'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
-import { formatDate } from '@/lib/utils'
+import { formatDate, speciesEmoji } from '@/lib/utils'
 import { DIARY_TYPE_LABELS, DIARY_TYPE_ICONS, type DiaryEntry, type DiaryType } from '@/types'
 import { ChevronLeft, ChevronRight, Calendar, Plus } from 'lucide-react'
 
@@ -25,7 +25,6 @@ export default function CalendarioPage() {
   const [events, setEvents]           = useState<(DiaryEntry & { pet_name: string })[]>([])
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
 
-  // Adicionar evento
   const [showAdd, setShowAdd] = useState(false)
   const [adding, setAdding]   = useState(false)
   const [addForm, setAddForm] = useState({
@@ -46,9 +45,8 @@ export default function CalendarioPage() {
       }))))
   }, [pets, cursor])
 
-  // Pré-preenche a data ao abrir o modal
-  function openAdd() {
-    setAddForm(f => ({ ...f, next_date: selectedDay || today.toISOString().slice(0,10), pet_id: pets[0]?.id || '' }))
+  function openAdd(date: string) {
+    setAddForm({ pet_id: pets[0]?.id || '', type: 'appointment', title: '', next_date: date, notes: '' })
     setShowAdd(true)
   }
 
@@ -71,7 +69,6 @@ export default function CalendarioPage() {
     }
     setAdding(false)
     setShowAdd(false)
-    setAddForm({ pet_id: '', type: 'appointment', title: '', next_date: '', notes: '' })
   }
 
   const year        = cursor.getFullYear()
@@ -80,6 +77,7 @@ export default function CalendarioPage() {
   const firstDow    = new Date(year, month, 1).getDay()
   const cells: (number | null)[] = [...Array(firstDow).fill(null), ...Array.from({length: daysInMonth}, (_,i) => i+1)]
 
+  // Map date string → events for that day
   const eventsByDay: Record<string, (DiaryEntry & { pet_name: string })[]> = {}
   events.forEach(e => {
     const d = e.next_date!.slice(0,10)
@@ -87,9 +85,22 @@ export default function CalendarioPage() {
     eventsByDay[d].push(e)
   })
 
-  const todayStr      = today.toISOString().slice(0,10)
-  const dateStr       = (d: number) => `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
-  const isToday       = (d: number) => dateStr(d) === todayStr
+  // Unique species emojis for a given day
+  function dayEmojis(ds: string): string[] {
+    const evts = eventsByDay[ds] || []
+    const seen = new Set<string>()
+    const result: string[] = []
+    evts.forEach(e => {
+      const pet = pets.find(p => p.id === e.pet_id)
+      const emoji = speciesEmoji(pet?.species || 'other')
+      if (!seen.has(emoji)) { seen.add(emoji); result.push(emoji) }
+    })
+    return result
+  }
+
+  const todayStr       = today.toISOString().slice(0,10)
+  const dateStr        = (d: number) => `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+  const isToday        = (d: number) => dateStr(d) === todayStr
   const selectedEvents = selectedDay ? (eventsByDay[selectedDay] || []) : []
 
   const upcomingAll = events
@@ -98,109 +109,168 @@ export default function CalendarioPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <TopBar title="Calendário" subtitle="Próximos eventos e compromissos" />
+      <TopBar title="Calendário" subtitle="Toque em qualquer data para adicionar evento" />
 
       <div className="flex-1 overflow-auto p-4 lg:p-6 max-w-2xl space-y-4 pb-24">
 
-        {/* Calendário */}
+        {/* Grade do calendário */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-4">
-              <button onClick={() => setCursor(new Date(year, month - 1, 1))}
+              <button onClick={() => { setCursor(new Date(year, month - 1, 1)); setSelectedDay(null) }}
                 className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                 <ChevronLeft size={18} />
               </button>
               <span className="font-bold text-slate-800 dark:text-slate-100">{MONTHS[month]} {year}</span>
-              <button onClick={() => setCursor(new Date(year, month + 1, 1))}
+              <button onClick={() => { setCursor(new Date(year, month + 1, 1)); setSelectedDay(null) }}
                 className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                 <ChevronRight size={18} />
               </button>
             </div>
 
             <div className="grid grid-cols-7 mb-1">
-              {WEEKDAYS.map(d => <div key={d} className="text-center text-[10px] font-bold text-slate-400 py-1">{d}</div>)}
+              {WEEKDAYS.map(d => (
+                <div key={d} className="text-center text-[10px] font-bold text-slate-400 py-1">{d}</div>
+              ))}
             </div>
 
             <div className="grid grid-cols-7 gap-1">
               {cells.map((day, i) => {
                 if (!day) return <div key={i} />
-                const ds    = dateStr(day)
-                const evts  = eventsByDay[ds] || []
-                const isSel = selectedDay === ds
+                const ds      = dateStr(day)
+                const evts    = eventsByDay[ds] || []
+                const hasEvts = evts.length > 0
+                const isSel   = selectedDay === ds
+                const emojis  = dayEmojis(ds)
+
                 return (
-                  <button key={i} type="button"
-                    onClick={() => setSelectedDay(isSel ? null : ds)}
-                    className={`relative flex flex-col items-center py-1.5 rounded-xl transition-all
-                      ${isSel ? 'bg-blue-600 text-white' : 'hover:bg-slate-50 dark:hover:bg-slate-700'}
-                      ${isToday(day) && !isSel ? 'ring-2 ring-blue-500' : ''}`}>
-                    <span className={`text-sm font-semibold
-                      ${isSel ? 'text-white' : isToday(day) ? 'text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-200'}`}>
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      if (hasEvts) {
+                        setSelectedDay(isSel ? null : ds)
+                      } else {
+                        openAdd(ds)
+                      }
+                    }}
+                    title={hasEvts ? `${evts.length} evento(s)` : 'Adicionar evento'}
+                    className={`relative flex flex-col items-center py-1.5 px-0.5 rounded-xl transition-all min-h-[48px] justify-start pt-1.5
+                      ${isSel
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : hasEvts
+                          ? 'hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                          : 'hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:ring-1 hover:ring-dashed hover:ring-slate-300 dark:hover:ring-slate-600'
+                      }
+                      ${isToday(day) && !isSel ? 'ring-2 ring-blue-500' : ''}`}
+                  >
+                    <span className={`text-sm font-semibold leading-none
+                      ${isSel
+                        ? 'text-white'
+                        : isToday(day)
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : 'text-slate-700 dark:text-slate-200'
+                      }`}>
                       {day}
                     </span>
-                    {evts.length > 0 && (
-                      <div className="flex gap-0.5 mt-0.5">
-                        {evts.slice(0,3).map((_,j) => (
-                          <div key={j} className={`w-1.5 h-1.5 rounded-full ${isSel ? 'bg-blue-200' : 'bg-blue-500'}`} />
+
+                    {/* Emojis de espécie */}
+                    {emojis.length > 0 && (
+                      <div className="flex flex-wrap justify-center gap-px mt-0.5 leading-none">
+                        {emojis.slice(0, 2).map((emoji, j) => (
+                          <span key={j} className="text-[11px] leading-none">{emoji}</span>
                         ))}
+                        {emojis.length > 2 && (
+                          <span className={`text-[9px] font-bold ${isSel ? 'text-blue-200' : 'text-slate-400'}`}>+</span>
+                        )}
                       </div>
+                    )}
+
+                    {/* Indicador "+" para dias vazios (hover) */}
+                    {!hasEvts && (
+                      <span className="text-[9px] text-slate-300 dark:text-slate-600 leading-none mt-0.5 opacity-0 group-hover:opacity-100">+</span>
                     )}
                   </button>
                 )
               })}
             </div>
+
+            {/* Legenda */}
+            {pets.length > 1 && (
+              <div className="flex flex-wrap gap-3 mt-4 pt-3 border-t border-slate-100 dark:border-slate-700">
+                {pets.map(p => (
+                  <div key={p.id} className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                    <span className="text-sm">{speciesEmoji(p.species)}</span>
+                    <span>{p.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
-
-        {/* Botão adicionar evento */}
-        <Button className="w-full gap-2" onClick={openAdd}>
-          <Plus size={16} /> Adicionar evento
-        </Button>
 
         {/* Eventos do dia selecionado */}
         {selectedDay && (
           <div>
-            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">
-              {new Date(selectedDay + 'T12:00:00').toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' })}
-            </h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                {new Date(selectedDay + 'T12:00:00').toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' })}
+              </h3>
+              <button
+                onClick={() => openAdd(selectedDay)}
+                className="flex items-center gap-1 text-xs text-blue-600 font-semibold hover:underline">
+                <Plus size={13} /> Novo evento
+              </button>
+            </div>
+
             {selectedEvents.length === 0 ? (
               <Card>
                 <CardContent className="p-6 text-center">
                   <p className="text-slate-400 text-sm mb-3">Nenhum evento neste dia</p>
-                  <Button size="sm" variant="outline" className="gap-1" onClick={openAdd}>
+                  <Button size="sm" variant="outline" className="gap-1" onClick={() => openAdd(selectedDay)}>
                     <Plus size={14} /> Adicionar evento
                   </Button>
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-2">
-                {selectedEvents.map(e => (
-                  <Card key={e.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-lg flex-shrink-0">
-                          {DIARY_TYPE_ICONS[e.type]}
+                {selectedEvents.map(e => {
+                  const pet = pets.find(p => p.id === e.pet_id)
+                  return (
+                    <Card key={e.id}>
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-lg flex-shrink-0">
+                            {DIARY_TYPE_ICONS[e.type]}
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-semibold text-slate-800 dark:text-slate-100 text-sm">{e.title}</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                              <span>{speciesEmoji(pet?.species || 'other')}</span>
+                              <span>{e.pet_name}</span>
+                              <span>·</span>
+                              <span>{DIARY_TYPE_LABELS[e.type]}</span>
+                            </div>
+                            {e.description && <div className="text-xs text-slate-400 mt-0.5">{e.description}</div>}
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <div className="font-semibold text-slate-800 dark:text-slate-100 text-sm">{e.title}</div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">{e.pet_name} · {DIARY_TYPE_LABELS[e.type]}</div>
-                          {e.description && <div className="text-xs text-slate-400 mt-0.5">{e.description}</div>}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  )
+                })}
               </div>
             )}
           </div>
         )}
 
-        {/* Próximos eventos */}
+        {/* Próximos eventos (quando nenhum dia selecionado) */}
         {!selectedDay && upcomingAll.length > 0 && (
           <div>
             <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">Próximos eventos</h3>
             <div className="space-y-2">
               {upcomingAll.map(e => {
-                const d = Math.ceil((new Date(e.next_date! + 'T12:00:00').getTime() - new Date(todayStr + 'T12:00:00').getTime()) / 86400000)
+                const pet    = pets.find(p => p.id === e.pet_id)
+                const d      = Math.ceil((new Date(e.next_date! + 'T12:00:00').getTime() - new Date(todayStr + 'T12:00:00').getTime()) / 86400000)
                 return (
                   <Card key={e.id}>
                     <CardContent className="p-4">
@@ -210,7 +280,12 @@ export default function CalendarioPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-slate-800 dark:text-slate-100 text-sm">{e.title}</div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">{e.pet_name} · {formatDate(e.next_date!)}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                            <span>{speciesEmoji(pet?.species || 'other')}</span>
+                            <span>{e.pet_name}</span>
+                            <span>·</span>
+                            <span>{formatDate(e.next_date!)}</span>
+                          </div>
                         </div>
                         <Badge variant={d === 0 ? 'danger' : d === 1 ? 'warning' : d <= 7 ? 'info' : 'default'} className="text-[10px] flex-shrink-0">
                           {d === 0 ? 'Hoje' : d === 1 ? 'Amanhã' : `${d}d`}
@@ -225,39 +300,68 @@ export default function CalendarioPage() {
         )}
 
         {!selectedDay && upcomingAll.length === 0 && (
-          <Card><CardContent className="p-8 text-center">
-            <Calendar size={40} className="text-slate-200 dark:text-slate-700 mx-auto mb-3" />
-            <p className="text-slate-400 text-sm">Nenhum evento futuro agendado</p>
-          </CardContent></Card>
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Calendar size={40} className="text-slate-200 dark:text-slate-700 mx-auto mb-3" />
+              <p className="text-slate-400 text-sm mb-3">Nenhum evento futuro agendado</p>
+              <p className="text-slate-300 text-xs">Toque em qualquer data para criar um evento</p>
+            </CardContent>
+          </Card>
         )}
       </div>
 
-      {/* Modal adicionar evento */}
+      {/* Modal criar evento */}
       <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Novo evento">
         <div className="p-5 space-y-3">
-          {pets.length > 1 && (
-            <Select label="Pet *"
+          {pets.length > 1 ? (
+            <Select
+              label="Pet *"
               value={addForm.pet_id}
               onChange={e => setAddForm(f => ({ ...f, pet_id: e.target.value }))}
-              options={[{ value:'', label:'Selecione o pet' }, ...pets.map(p => ({ value: p.id, label: p.name }))]}
+              options={[
+                { value: '', label: 'Selecione o pet' },
+                ...pets.map(p => ({ value: p.id, label: `${speciesEmoji(p.species)} ${p.name}` }))
+              ]}
             />
+          ) : pets.length === 1 && (
+            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 rounded-xl px-3 py-2.5">
+              <span className="text-base">{speciesEmoji(pets[0].species)}</span>
+              <span className="font-medium">{pets[0].name}</span>
+            </div>
           )}
-          <Select label="Tipo *"
+
+          <Select
+            label="Tipo *"
             value={addForm.type}
             onChange={e => setAddForm(f => ({ ...f, type: e.target.value as DiaryType }))}
             options={ALL_TYPES.map(t => ({ value: t, label: `${DIARY_TYPE_ICONS[t]} ${DIARY_TYPE_LABELS[t]}` }))}
           />
-          <Input label="Título *" placeholder="Ex: Consulta anual, Vacina V10..."
-            value={addForm.title} onChange={e => setAddForm(f => ({ ...f, title: e.target.value }))} />
-          <Input label="Data *" type="date"
-            value={addForm.next_date} onChange={e => setAddForm(f => ({ ...f, next_date: e.target.value }))} />
-          <Input label="Observações (opcional)" placeholder="Detalhes adicionais..."
-            value={addForm.notes} onChange={e => setAddForm(f => ({ ...f, notes: e.target.value }))} />
+          <Input
+            label="Título *"
+            placeholder="Ex: Consulta anual, Vacina V10..."
+            value={addForm.title}
+            onChange={e => setAddForm(f => ({ ...f, title: e.target.value }))}
+          />
+          <Input
+            label="Data *"
+            type="date"
+            value={addForm.next_date}
+            onChange={e => setAddForm(f => ({ ...f, next_date: e.target.value }))}
+          />
+          <Input
+            label="Observações (opcional)"
+            placeholder="Detalhes adicionais..."
+            value={addForm.notes}
+            onChange={e => setAddForm(f => ({ ...f, notes: e.target.value }))}
+          />
           <div className="flex gap-3 pt-1">
             <Button variant="outline" className="flex-1" onClick={() => setShowAdd(false)}>Cancelar</Button>
-            <Button className="flex-1" loading={adding}
+            <Button
+              className="flex-1"
+              loading={adding}
               disabled={!addForm.title.trim() || !addForm.next_date || (!addForm.pet_id && pets.length > 1)}
-              onClick={saveEvent}>
+              onClick={saveEvent}
+            >
               Salvar evento
             </Button>
           </div>
