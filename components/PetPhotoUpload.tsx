@@ -1,5 +1,5 @@
 'use client'
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Camera, Loader2 } from 'lucide-react'
 
@@ -17,6 +17,11 @@ export function PetPhotoUpload({ petId, userId, currentUrl, petName, size = 'lg'
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null)
+
+  // Sincroniza quando o pai carrega a URL do banco depois do mount
+  useEffect(() => {
+    if (currentUrl) setPreview(currentUrl)
+  }, [currentUrl])
 
   const dim = size === 'lg' ? 'w-28 h-28' : 'w-14 h-14'
   const iconSize = size === 'lg' ? 24 : 16
