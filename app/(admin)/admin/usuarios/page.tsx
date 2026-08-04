@@ -1,12 +1,13 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { gestao } from '@/lib/gestao'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { formatDate, formatCurrency } from '@/lib/utils'
-import { Search, Mail, CreditCard, PawPrint, Users, ChevronDown } from 'lucide-react'
+import { Search, Mail, CreditCard, PawPrint, Users, ChevronDown, Lock, Unlock, Trash2 } from 'lucide-react'
 
 const PLANS = [
   { value: 'free',    label: 'Grátis',  color: 'default' as const,  price: 0 },
@@ -16,7 +17,7 @@ const PLANS = [
 
 type UserRow = {
   id: string; name: string; email: string | null; plan: string
-  role: string; created_at: string; pets: { count: number }[]
+  role: string; created_at: string; pets: { count: number }[]; blocked: boolean
 }
 
 export default function AdminUsuarios() {
@@ -27,12 +28,14 @@ export default function AdminUsuarios() {
   const [filterPlan, setFilterPlan] = useState('')
   const [changingPlan, setChangingPlan] = useState<string | null>(null)
   const [resetSent, setResetSent] = useState<string | null>(null)
+  const [togglingBlock, setTogglingBlock] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
   const [msg, setMsg] = useState('')
 
   async function load() {
     const { data } = await supabase
       .from('profiles')
-      .select('id, name, email, plan, role, created_at, pets(count)')
+      .select('id, name, email, plan, role, created_at, blocked, pets(count)')
       .order('created_at', { ascending: false })
     setUsers((data as UserRow[]) ?? [])
     setLoading(false)
@@ -72,6 +75,33 @@ export default function AdminUsuarios() {
       setMsg('Erro: ' + error.message)
       setTimeout(() => setMsg(''), 3000)
     }
+  }
+
+  async function toggleBlock(userId: string, current: boolean) {
+    setTogglingBlock(userId)
+    const { error } = await supabase.from('profiles').update({ blocked: !current }).eq('id', userId)
+    if (!error) {
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, blocked: !current } : u))
+      setMsg(!current ? 'Acesso bloqueado.' : 'Acesso liberado.')
+    } else {
+      setMsg('Erro ao atualizar acesso: ' + error.message)
+    }
+    setTogglingBlock(null)
+    setTimeout(() => setMsg(''), 3000)
+  }
+
+  async function deleteUser(userId: string, name: string) {
+    if (!confirm(`Excluir permanentemente "${name}"? Essa ação não pode ser desfeita — a conta e todos os dados do pet serão apagados.`)) return
+    setDeleting(userId)
+    try {
+      await gestao('delete_user', { user_id: userId })
+      setUsers(prev => prev.filter(u => u.id !== userId))
+      setMsg('Usuário excluído.')
+    } catch (e) {
+      setMsg('Erro ao excluir: ' + (e as Error).message)
+    }
+    setDeleting(null)
+    setTimeout(() => setMsg(''), 3000)
   }
 
   const planBadge = (plan: string) => {
@@ -149,6 +179,7 @@ export default function AdminUsuarios() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-semibold text-slate-200">{u.name}</span>
                       {u.role === 'admin' && <Badge variant="danger">Admin</Badge>}
+                      {u.blocked && <Badge variant="danger">Bloqueado</Badge>}
                       {planBadge(u.plan)}
                     </div>
                     <div className="flex items-center gap-3 mt-0.5 flex-wrap">
@@ -195,6 +226,31 @@ export default function AdminUsuarios() {
                         title="Enviar email de redefinição de senha"
                       >
                         <Mail size={12} />{resetSent === u.id ? 'Enviado!' : 'Reset senha'}
+                      </button>
+                    )}
+
+                    {/* Bloquear/Desbloquear acesso */}
+                    {u.role !== 'admin' && (
+                      <button
+                        onClick={() => toggleBlock(u.id, u.blocked)}
+                        disabled={togglingBlock === u.id}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs transition-all ${u.blocked ? 'bg-amber-900/30 text-amber-400 hover:bg-amber-900/50' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+                        title={u.blocked ? 'Liberar acesso' : 'Bloquear acesso'}
+                      >
+                        {u.blocked ? <Unlock size={12} /> : <Lock size={12} />}
+                        {u.blocked ? 'Liberar' : 'Bloquear'}
+                      </button>
+                    )}
+
+                    {/* Excluir */}
+                    {u.role !== 'admin' && (
+                      <button
+                        onClick={() => deleteUser(u.id, u.name)}
+                        disabled={deleting === u.id}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs bg-red-900/30 text-red-400 hover:bg-red-900/50 transition-all"
+                        title="Excluir usuário"
+                      >
+                        <Trash2 size={12} />{deleting === u.id ? 'Excluindo...' : 'Excluir'}
                       </button>
                     )}
                   </div>

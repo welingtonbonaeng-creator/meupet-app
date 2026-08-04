@@ -27,7 +27,14 @@ export default function LoginPage() {
     if (error) { setLoading(false); setError('E-mail ou senha incorretos'); return }
 
     const { data: profile } = await supabase
-      .from('profiles').select('role').eq('id', data.user.id).single()
+      .from('profiles').select('role, blocked').eq('id', data.user.id).single()
+
+    if (profile?.blocked) {
+      await supabase.auth.signOut()
+      setLoading(false)
+      setError('Sua conta foi bloqueada. Entre em contato com o suporte.')
+      return
+    }
 
     setLoading(false)
     if (profile?.role === 'admin') {
