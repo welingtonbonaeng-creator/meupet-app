@@ -9,10 +9,13 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS profiles (
   id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name        TEXT NOT NULL,
+  email       TEXT,
   phone       TEXT,
   city        TEXT,
   state       TEXT,
   avatar_url  TEXT,
+  role        TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user','admin')),
+  blocked     BOOLEAN NOT NULL DEFAULT false,
   plan        TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free','family','premium')),
   trial_ends_at TIMESTAMPTZ,
   created_at  TIMESTAMPTZ DEFAULT NOW(),
@@ -192,8 +195,13 @@ CREATE TABLE IF NOT EXISTS training_completions (
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO profiles (id, name)
-  VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)));
+  INSERT INTO profiles (id, name, email)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
+    NEW.email
+  )
+  ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
